@@ -11,6 +11,7 @@ public void main() {
 	Resource project = getProject(PROJECT);
 	set[loc] javafiles = { f | /file(f) <- project, f.extension == "java"};
 	
+	
 	print("# of java files = ");
 	println(size(javafiles));
 }
