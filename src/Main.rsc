@@ -49,86 +49,29 @@ public void countLOC() {
 	
 	//number of commentlines using the slash with star
 	str fileString = readFile(file);
-	str voorbeeld = "  eerst wat tekst  \n   /*begin:comment1 zjdbckzjbc/* nestedcomment */ djcbqjdbcq \n Tekst * tekst en \n lijntjes * tekst /* zonder lijn \n comentaar \\ comentaar \n end:comment1*/ "
-		+ "\n tekst en tekst en \n lijntjes en tekst /*begin:comment2 zonder lijn \n comentaar \\ comentaar \n end:comment2*/ met tekst erachter \n //moet dus niet meegerekend worden.";
-		
-	str voorbeeld2 = "    \n   /* zjdbckzjbc djcbqjdbcq \n Tekst * tekst en \n lijntjes * / tekst /* zonder lijn \n comentaar \\ comentaar \n * / "
-		+ "\n tekst en tekst en \n lijntjes en tekst /* zonder lijn \n comentaar \\ comentaar \n */ met tekst erachter \n //moet dus niet meegerekend worden.";
-		
-	str voorbeeld3  = " g//ewone *tekst";
-	int total = readNrOfLines(voorbeeld2);
-//	str tempString = fileString;
-//	str tempString = voorbeeld;
-//	str tempString = voorbeeld2;
-	str tempString = voorbeeld3;
-	
-	println();
-	println(tempString);
-	print("#lines = ");
-	println(total);
-	println();
-	//list[str] comments = [];
-/*	while (/<begin:><comment:\/\*.*?\*\/><end:.*>/s := tempString) {
-		println();
-		println("begin = "  +begin);
-		println("comment = " + comment);
-		println("end = " + end);
-		println();
-		tempString = begin + end;
-		println(voorbeeld);
-	}
-*/	int count = 0;
-//	while (/<firstbegin:[^(\/\*)]*><begintag:\/\*><firstend:.*>/s := tempString) {
+	str tempString = fileString;
+	int count = 0;
+
 	while (/<firstbegin:.*?(?=\/\*)><begintag:\/\*><firstend:.*>/s := tempString) {
-		print("firstbegin = \n\t"  + firstbegin + "\n");
-		print("commenttag = \n\t" + begintag + "\n");
-		print("firstend = \n\t" + firstend);
-		println();
-		
 		if ((firstbegin != "") && !(/\n\s*$/ := firstbegin || (/^\s*$/  := firstbegin))) {
 			count -= 1;
-			println("count -= 1");
 		}
-		println("count = <count>");
+
 		bool endtagFound = /<newbegin:><endtag:\*\/><newend:.*>/s := firstend;
-//		if (/<newbegin:.*[^(\*\/)]><endtag:\*\/><newend:.*>/s := firstend) {
 		if (/<newbegin:.*?(?=\*\/)><endtag:\*\/><newend:.*>/s := firstend) {
-			print("newbegin = \n\t"  + newbegin + "\n");
-			print("commenttag = \n\t" + endtag + "\n");
-			print("newend = \n\t" + newend);
-			println();
 			count += readNrOfLines(newbegin);
 			if (!(/^[\s]*\n/ := newend)) {
 				count -= 1;
-				println("count -= 1");
 			}
 			tempString = newend;		
 		} else {
 				println("Exception: bad construction");
 		}
-		println("count = <count>");
 	}
 	int countRest = readNrOfLines(tempString);
-	println("tempString na regex");
-	println(tempString);
-	print("#lines = ");
-	println(countRest);
-	println();
 	int nrOfStarCommentLines = count;
 	print("Total # of comment lines using /* in Distinct2.java = ");
 	println(nrOfStarCommentLines);
-/*	println(voorbeeld);
-	println();
-	print("Voorbeeld = ");
-	println(gevonden1);	
-	print("Voorbeeld2 = ");
-	println(gevonden2);
-	print("Voorbeeld3 = ");
-	println(gevonden3);
-*/	
-	//number of documentationlines using /**
-	
-		
 }
 
 private int readNrOfLines(str text) {
