@@ -10,10 +10,13 @@ public void main() {
 	loc PROJECT = |project://SmallSQL-master/|;
 	Resource project = getProject(PROJECT);
 	set[loc] javafiles = { f | /file(f) <- project, f.extension == "java"};
-	countLOC();
-		
+
 	print("# of java files = ");
-	println(javafiles);
+	println(size(javafiles));
+
+	print("Lines of code excluding blank lines, comments and documentation = ");
+	println(countLOC(javafiles));
+		
 }
 
 /* This method counts the lines of code over all the java-files, comments and blank lines excluded.
@@ -23,28 +26,28 @@ public void main() {
  * except if these are surrounded by a pair of quotes)
  */
 
-public void countLOC() {
-//first try with one file
-//	set[loc] javafiles = { f | /file(f) <- project, f.extension == "java"};
-	loc file = |project://SmallSQL-master/src/main/java/smallsql/database/Distinct2.java|;
-	
+private int countLOC(set[loc] files) {
+	int linesOfCode = sum([countLocPerFile(f) | f <- files]);
+	return linesOfCode;
+}
+
+private int countLocPerFile(loc file) {
 	//total number of lines
 	list[str] lines = readFileLines(file);
-	int totalLines= size(lines);
-	print("Total #lines in Distinct.java = ");
-	println(totalLines);
+	int nrOfLines= size(lines);
+//	print("Total #lines in Distinct.java = ");
+//	println(nrOfLines);
 	
 	//number of blank lines	
 	list[str] blanklines = [ line | line <- lines, /^\s*$/ := line];
 	int nrOfBlankLines= size(blanklines);
-	print("Total # of blank lines in Distinct.java = ");
-	println(nrOfBlankLines);
+//	println("Total # of blank lines in <file> = <nrOfBlankLines>");
 	
 	//number of commentlines using '//'
 	list[str] slashCommentlines = [ line | line <- lines, /^\s*\/{2,}/ := line];
 	int nrOfSlashCommentlines= size(slashCommentlines);
-	print("Total # of comment lines using // in Distinct2.java = ");
-	println(nrOfSlashCommentlines);
+//	print("Total # of comment lines using // in <file> = ");
+//	println(nrOfSlashCommentlines);
 	
 	//number of commentlines using the slash with star
 	str fileString = readFile(file);
@@ -78,9 +81,13 @@ public void countLOC() {
 	}
 	int countRest = readNrOfLines(tempString);
 	int nrOfStarCommentLines = count;
-	print("Total # of comment lines using /* in Distinct2.java = ");
-	println(nrOfStarCommentLines);
-}
+//	print("Total # of comment lines using /* in <file> = ");
+//	println(nrOfStarCommentLines);
+	
+	int linesOfCode = nrOfLines - (nrOfBlankLines + nrOfSlashCommentlines + nrOfStarCommentLines);
+	
+	return linesOfCode ;
+}	
 
 private int readNrOfLines(str text) {
 	int count = 0; 
@@ -96,7 +103,7 @@ private int readNrOfLines(str text) {
 	return count;
 }
 
-public int countNrOfParentheses(str text) {
+private int countNrOfParentheses(str text) {
 	int count = 0; 
 	if (text == "") {
 		return 0;
