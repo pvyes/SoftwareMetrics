@@ -23,9 +23,8 @@ public void main() {
  * except if these are surrounded by a pair of quotes)
  */
 
-//TODO to finish end refine
 public void countLOC() {
-	//first try with one file
+//first try with one file
 //	set[loc] javafiles = { f | /file(f) <- project, f.extension == "java"};
 	loc file = |project://SmallSQL-master/src/main/java/smallsql/database/Distinct2.java|;
 	
@@ -53,19 +52,28 @@ public void countLOC() {
 	int count = 0;
 
 	while (/<firstbegin:.*?(?=\/\*)><begintag:\/\*><firstend:.*>/s := tempString) {
-		if ((firstbegin != "") && !(/\n\s*$/ := firstbegin || (/^\s*$/  := firstbegin))) {
-			count -= 1;
-		}
+		
+		int nrOfParentheses = countNrOfParentheses(firstbegin);
+		if (nrOfParentheses % 2 != 0) {
+				bool parenthesesFound = (/^<begin:.*?(?=["'])>["']<end:.*>/s := firstend);
+				tempString = end;
+				firstbegin = "";
+				firstend = "";
+		} else {
 
-		bool endtagFound = /<newbegin:><endtag:\*\/><newend:.*>/s := firstend;
-		if (/<newbegin:.*?(?=\*\/)><endtag:\*\/><newend:.*>/s := firstend) {
-			count += readNrOfLines(newbegin);
-			if (!(/^[\s]*\n/ := newend)) {
+			if ((firstbegin != "") && !(/\n\s*$/ := firstbegin || (/^\s*$/  := firstbegin))) {
 				count -= 1;
 			}
-			tempString = newend;		
-		} else {
-				println("Exception: bad construction");
+	
+			if (/<newbegin:.*?(?=\*\/)><endtag:\*\/><newend:.*>/s := firstend) {
+				count += readNrOfLines(newbegin);
+				if (!(/^[\s]*\n/ := newend)) {
+					count -= 1;
+				}
+				tempString = newend;		
+			} else {
+					println("Exception: bad construction");
+			}
 		}
 	}
 	int countRest = readNrOfLines(tempString);
@@ -82,6 +90,18 @@ private int readNrOfLines(str text) {
 		count = 1;
 	}
 	while (/^<begin:[^\n]*>\n<end:.*>/s := text) {
+		count += 1;
+		text = begin + end;
+	}
+	return count;
+}
+
+public int countNrOfParentheses(str text) {
+	int count = 0; 
+	if (text == "") {
+		return 0;
+	}
+	while (/^<begin:.*>["']<end:.*>/s := text) {
 		count += 1;
 		text = begin + end;
 	}
