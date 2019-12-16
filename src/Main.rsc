@@ -6,6 +6,8 @@ import lang::java::jdt::m3::Core;
 import lang::java::m3::AST;
 import util::Resources;
 
+import Complexity;
+
 public void main() {
 	loc PROJECT = |project://SmallSQL-master/|;
 	Resource project = getProject(PROJECT);
@@ -15,7 +17,9 @@ public void main() {
 	println(size(javafiles));
 
 	print("Lines of code excluding blank lines, comments and documentation = ");
-	println(countLOC(javafiles));
+//	println(countLOC(javafiles));
+	
+	println(calculateComplexities(project));
 		
 }
 

@@ -3,41 +3,57 @@ module Complexity
 import IO;
 import Prelude;
 import lang::java::jdt::m3::Core;
+import lang::java::jdt::m3::AST;
 import lang::java::m3::AST;
 import util::Resources;
 
-public int calculateComplexities() {
-	
+/**
+ * param projectlocation
+ * return a list of tuples with file location, method name and complexity number.
+ */
+public list[tuple[loc,str,int]] calculateComplexities(Resource project) {
+	set[loc] javafiles = { f | /file(f) <- project, f.extension == "java"};
+	print("#files = ");
+	println(size(javafiles));
+	list[tuple[loc,str,int]] complexities = [];
+	for (loc file <- javafiles) {
+		complexities += calculateFileComplexity(file);
+	}
+	return complexities;
 }
 
-
+/**
+ *Calculates the complexities of the methods of a file
+ *param location file
+ *return a list of tuples containing the location of the file, the method's name and its complexity list[<location,name,complexity>]
+ */
+public list[tuple[loc,str,int]] calculateFileComplexity(loc file) {
+	Declaration ast = createAstFromFile(file, false);
+	list[tuple[loc,str,int]] methodComplexities = [];
+	visit(ast) {
+		case \method(t, name, d, e, impl): {
+			int cCount = calculateMethodComplexity(\constructor(name,d,e,impl));			
+			tuple[loc file, str methodName , int mc] methodComplexity = <file ,name, cCount>;
+			methodComplexities += methodComplexity;
+   	}
+		case \constructor(name,d,e,impl): {
+			int cCount = calculateMethodComplexity(\constructor(name,d,e,impl));			
+			tuple[loc file, str methodName , int mc] methodComplexity = <file ,name, cCount>;
+			methodComplexities += methodComplexity;
+    	}
+    }
+	return methodComplexities;
+}
 
 /**
  * Calculates the cyclomatic complexity of one method.
- * TODO param a method
+ * param a declaration (method or constructor)
  * return the complexity.
  */
-public int calculateComplexity() {
-	//begin with one method from Distinct 2
-	loc PROJECT = |project://SmallSQL-master/|;
-	Resource project = getProject(PROJECT);	
-//	set[loc] javafiles = { f | /file(f) <- project, f.extension == "java"};
-//	loc file = |project://SmallSQL-master/src/main/java/smallsql/database/Distinct2.java|;
-//	set[Declaration] asts = createAstsFromFiles(javafiles, false);
-	set[Declaration] asts = createAstsFromFiles({|project://SmallSQL-master/src/main/java/smallsql/database/Distinct2.java|}, false);
-print("size asts =  ");
-println(size(asts));
-
-//	M3 model = createM3FromEclipseFile(|project://SmallSQL-master/src/main/java/smallsql/database/Distinct2.java|);
-/*	methods =  { <x,y> | <x,y> <- model.containment
-                       , x.scheme=="java+class"
-                       , y.scheme=="java+method" || y.scheme=="java+constructor" 
-                       };
-   telMethoden = { <a, size(methoden[a])> | a <- domain(methoden) };
-*/ 
-	int complexity = 1;   
-	visit(asts) {  
-    	case \if(cond, _): {
+public int calculateMethodComplexity(Declaration method) {
+	int complexity = 1;
+	visit(method) { 		 
+    	case \if(cond, _): {   	
     		str line = readFile(cond.src);
     		int orConditions = countOrConditions(line);
     		complexity += (1 + orConditions);
@@ -51,7 +67,7 @@ println(size(asts));
 //        	println("while-or-condition = " + line + ": <orConditions>");
 //			println("count = <complexity>");
         }
-	   	case \do(_, cond): {
+	   	case \do(_, cond): {   	
     		str line = readFile(cond.src);
     		int orConditions = countOrConditions(line);
     		complexity += (1 + orConditions);
@@ -67,7 +83,6 @@ println(size(asts));
 //			println("count = <complexity>");
     	}	
 	}
-	println("complexity = <complexity>");
 	return complexity;
 }
 
