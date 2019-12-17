@@ -6,6 +6,8 @@ import lang::java::jdt::m3::Core;
 import lang::java::m3::AST;
 import util::Resources;
 
+import UnitSize;
+
 public void main() {
 	loc PROJECT = |project://SmallSQL-master/|;
 	Resource project = getProject(PROJECT);
@@ -13,7 +15,13 @@ public void main() {
 
 	print("# of java files = ");
 	println(size(javafiles));
-
+	
+	print("Lines of code per method");
+	set[Declaration] declarations = createAstsFromEclipseProject(project, true);
+	rel[loc, Statement] methods = getMethodsAST(declarations);
+	list[int] unitSizesPerMethod = getLinesOfCodePerMethod(methods);
+	map[str, int] unitSizeRiskMetrics = getRiskMetrics(unitSizesPerMethod);
+		
 	print("Lines of code excluding blank lines, comments and documentation = ");
 	println(countLOC(javafiles));
 		
