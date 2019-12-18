@@ -7,19 +7,44 @@ import lang::java::jdt::m3::AST;
 import lang::java::m3::AST;
 import util::Resources;
 
+import VolumesDeclaration;
+
 /**
  * param projectlocation
  * return a list of tuples with file location, method name and complexity number.
  */
-public list[tuple[loc,str,int]] calculateComplexities(Resource project) {
+public list[tuple[loc,str,int]] calculateComplexities(/*Resource project*/) {
+	loc PROJECT = |project://SmallSQL-master/|;
+	Resource project = getProject(PROJECT);
 	set[loc] javafiles = { f | /file(f) <- project, f.extension == "java"};
-	print("#files = ");
-	println(size(javafiles));
+//	print("#files = ");
+//	println(size(javafiles));
 	list[tuple[loc,str,int]] complexities = [];
 	for (loc file <- javafiles) {
-		complexities += calculateFileComplexity(file);
+		complexities += calculateMethodComplexity(file);
 	}
+//	println(size(complexities));
 	return complexities;
+}
+
+public list[tuple[loc,str,int]] getMethodInformation(loc file) {
+	Declaration ast = createAstFromFile(file, false);
+	list[tuple[loc,str,int]] methodComplexities = [];
+	visit(ast) {
+		case \method(t, name, d, e, impl): {
+			int cCount = calculateMethodComplexity(\method(t, name,d,e,impl));			
+			tuple[loc file, str methodName , int mc] methodComplexity = <file ,name, cCount>;
+			methodComplexities += methodComplexity;
+//			FileLineInformation volume = countLinesOfCodePerFile(file, \method(t, name,d,e,impl));
+//			println(volume);
+   	}
+		case \constructor(name,d,e,impl): {
+			int cCount = calculateMethodComplexity(\constructor(name,d,e,impl));			
+			tuple[loc file, str methodName , int mc] methodComplexity = <file ,name, cCount>;
+			methodComplexities += methodComplexity;
+    	}
+    }
+	return methodComplexities;
 }
 
 /**
@@ -27,12 +52,12 @@ public list[tuple[loc,str,int]] calculateComplexities(Resource project) {
  *param location file
  *return a list of tuples containing the location of the file, the method's name and its complexity list[<location,name,complexity>]
  */
-public list[tuple[loc,str,int]] calculateFileComplexity(loc file) {
+public list[tuple[loc,str,int]] calculateMethodComplexity(loc file) {
 	Declaration ast = createAstFromFile(file, false);
 	list[tuple[loc,str,int]] methodComplexities = [];
 	visit(ast) {
 		case \method(t, name, d, e, impl): {
-			int cCount = calculateMethodComplexity(\constructor(name,d,e,impl));			
+			int cCount = calculateMethodComplexity(\method(t, name,d,e,impl));			
 			tuple[loc file, str methodName , int mc] methodComplexity = <file ,name, cCount>;
 			methodComplexities += methodComplexity;
    	}
@@ -51,6 +76,7 @@ public list[tuple[loc,str,int]] calculateFileComplexity(loc file) {
  * return the complexity.
  */
 public int calculateMethodComplexity(Declaration method) {
+println(method);
 	int complexity = 1;
 	visit(method) { 		 
     	case \if(cond, _): {   	

@@ -19,7 +19,8 @@ public void main() {
 	print("# of java files = ");
 	println(size(javafiles));
 
-	set[FileLineInformation] flis = countLOC(project);
+	//set[FileLineInformation] flis = countLOC(project);
+	set[FileLineInformation] flis = countLinesOfCodePerMethod(PROJECT);
 	println("Lines of code excluding blank lines, comments and documentation;");
 	print("Total Volume for <PROJECT> = ");
 	println(getTotalVolume(flis));
