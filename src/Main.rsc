@@ -21,22 +21,28 @@ public void main() {
 
 	//set[FileLineInformation] flis = countLOC(project);
 	set[FileLineInformation] flis = countLinesOfCodePerMethod(PROJECT);
-	println("Lines of code excluding blank lines, comments and documentation;");
+	println("\nLines of code of methods excluding blank lines, comments and documentation:");
 	print("Total Volume for <PROJECT> = ");
 	println(getTotalVolume(flis));
-	print("Highest Volume File for <PROJECT> = ");
-	println(getHighestVolumeFile(flis));
-	print("Lowest Volume File for <PROJECT> = ");
-	println(getLowestVolumeFile(flis));
+	int siz = getHighestVolumeFile(flis);
+	int nrOfMethods = size(getMethodsWithHighestVolume(flis));
+	println("Highest Volume method for <PROJECT> = <siz> (<nrOfMethods> methods(s))");
+	siz = getLowestVolumeFile(flis);
+	nrOfMethods = size(getMethodsWithLowestVolume(flis));
+	println("Lowest Volume method for <PROJECT> = <siz> (<nrOfMethods> methods(s))");
 	print("Average Volume for <PROJECT> = ");
 	println(toInt(getAverageVolumeFile(flis)));
-	print("Median Volume for <PROJECT> = ");
-	println(getMedianVolumeFile(flis));
+	real med = getMedianVolumeFile(flis);
+	nrOfMethods = size(getMethodsWithMedianVolume(flis));
+	println("Median Volume method for <PROJECT> = <med> (<nrOfMethods> methods(s))");
 	
 	println("\nDetails on Volumes:");
 	for(fli <- flis) {
 		print(toString(fli));
 	}
+println();
+println();
+	println(toCSV(flis));
 	
 //	println(calculateComplexities(project));		
 }

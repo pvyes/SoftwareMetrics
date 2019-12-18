@@ -7,8 +7,6 @@ import lang::java::jdt::m3::AST;
 import lang::java::m3::AST;
 import util::Resources;
 
-import VolumesDeclaration;
-
 /**
  * param projectlocation
  * return a list of tuples with file location, method name and complexity number.

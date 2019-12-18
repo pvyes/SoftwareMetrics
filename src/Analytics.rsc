@@ -17,29 +17,40 @@ public int getTotalVolume(set[FileLineInformation] flis) {
 	return sum([linesOfCode | <_,_,_,_,_,linesOfCode> <- flis]);
 }
 
-public rel[loc,int] getHighestVolumeFile(set[FileLineInformation] flis) {
-	int maximum = max([linesOfCode | <_,_,_,_,_,linesOfCode> <- flis]);	
-	return {<location,linesOfCode> | <location,_,_,_,_,linesOfCode> <- flis, linesOfCode == maximum};
+public int getHighestVolumeFile(set[FileLineInformation] flis) {
+	return max([linesOfCode | <_,_,_,_,_,linesOfCode> <- flis]);
 }
 
-public rel[loc,int] getLowestVolumeFile(set[FileLineInformation] flis) {
+public set[loc] getMethodsWithHighestVolume(set[FileLineInformation] flis) {
+	int maximum = max([linesOfCode | <_,_,_,_,_,linesOfCode> <- flis]);	
+	return {location | <location,_,_,_,_,linesOfCode> <- flis, linesOfCode == maximum};
+}
+
+public int getLowestVolumeFile(set[FileLineInformation] flis) {
+	return min([linesOfCode | <_,_,_,_,_,linesOfCode> <- flis]);
+}
+
+public set[loc] getMethodsWithLowestVolume(set[FileLineInformation] flis) {
 	int minimum = min([linesOfCode | <_,_,_,_,_,linesOfCode> <- flis]);	
-	return {<location,linesOfCode> | <location,_,_,_,_,linesOfCode> <- flis, linesOfCode == minimum};
+	return {location | <location,_,_,_,_,linesOfCode> <- flis, linesOfCode == minimum};
 }
 
 public real getAverageVolumeFile(set[FileLineInformation] flis) {	
 	return mean([linesOfCode | <_,_,_,_,_,linesOfCode> <- flis]);	
 }
 
-public rel[loc,int] getMedianVolumeFile(set[FileLineInformation] flis) {	
-	real median = median([linesOfCode | <_,_,_,_,_,linesOfCode> <- flis]);	
-	return {<location,linesOfCode> | <location,_,_,_,_,linesOfCode> <- flis, linesOfCode == ceil(median) || linesOfCode == floor(median)};
+public real getMedianVolumeFile(set[FileLineInformation] flis) {	
+	return median([linesOfCode | <_,_,_,_,_,linesOfCode> <- flis]);
 }
 
+public set[loc] getMethodsWithMedianVolume(set[FileLineInformation] flis) {	
+	real median = median([linesOfCode | <_,_,_,_,_,linesOfCode> <- flis]);	
+	return {location | <location,_,_,_,_,linesOfCode> <- flis, linesOfCode == ceil(median) || linesOfCode == floor(median)};
+}
 /*Functions calculating the complexity
 */
 public int getMaxInt() {
-	return 2000000000;
+	return roundexp(ln(2) * 31) - 1;
 }
 
 public CCRiskEvaluation getCCRiskEvaluation() {
