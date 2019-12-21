@@ -49,8 +49,12 @@ public set[loc] getMethodsWithMedianVolume(set[FileLineInformation] flis) {
 	real median = median([linesOfCode | <_,_,_,_,_,linesOfCode> <- flis]);	
 	return {location | <location,_,_,_,_,linesOfCode> <- flis, linesOfCode == ceil(median) || linesOfCode == floor(median)};
 }
-/*Functions calculating the complexity
+
+
+/*
+Functions calculating the complexity
 */
+
 public int getMaxInt() {
 	return round(exp(ln(2) * 31)) - 1;
 }
@@ -58,7 +62,8 @@ public int getMaxInt() {
 public CCRiskEvaluation getCCRiskEvaluation() {
 	int maxInt = getMaxInt();
 //	return [<0,10,"low">,<11,20,"moderate">,<21,50,"high">,<51,maxInt,"very high">];
-	return {<0,1,"low">,<2,2,"moderate">,<3,4,"high">,<5,maxInt,"very high">};
+	//for testing with Jabberpoint
+	return {<0,1,"low">,<2,3,"moderate">,<4,4,"high">,<5,maxInt,"very high">};
 }
 
 public MaxRelativeLOC getMaxRelativeLOC() {
@@ -71,6 +76,40 @@ public MaxRelativeLOC getMaxRelativeLOC() {
 	];
 }
 
+/**
+ * Returns a set of tuples with the risk-name, the numberOfMethods and the linesOfCode in this risk category. 
+ */
+public set[tuple[str,int,int]] getLinesOfCodePerRisk (set[ComplexityInformation] cis, set[FileLineInformation] flis) {
+	set[tuple[str,int,int]] ratings = {};
+	tuple[str rank, int numberOfMethods, int linesOfCode] rating = <"",0,0>;
+	CCRiskEvaluation ccre = getCCRiskEvaluation();
+	for (re <- ccre) {
+		set[ComplexityInformation] cisPerRisk = gatherComplexitiesByRisk(cis, re.risk);
+		int numberOfMethods = size(cisPerRisk);
+		int linesOfCode = countLinesOfCis(cisPerRisk, flis);
+		rating = <re.risk, numberOfMethods, linesOfCode>;
+		ratings += rating;
+	}
+	return ratings;	
+}
+
+/**
+ * Returns a set of tuples with the risk-name, the linesOfCode in this risk category, the total volume (LOC) and the percentage relative to the total Volume. 
+ */
+public set[tuple[str,int,int,real]] getPercentageOfLinesOfCodePerRisk (set[ComplexityInformation] cis, set[FileLineInformation] flis) {
+	set[tuple[str,int,int]] ratings = getLinesOfCodePerRisk(cis, flis);
+	set[tuple[str,int,int,real]] percentages = {}; 
+	int totalVolume = getTotalVolume(flis);
+	CCRiskEvaluation ccre = getCCRiskEvaluation();
+	for (<risk,_,linesOfCode> <- ratings) {
+		real percentage = toReal(linesOfCode) / toReal(totalVolume) * 100.;
+		rating = <risk, linesOfCode, totalVolume, percentage>;
+		percentages += rating;
+	}
+	return percentages;	
+}
+
+
 public tuple[str, int, int, int] rateSystemComplexity(set[ComplexityInformation] cis, set[FileLineInformation] flis) {
 	tuple[str rank, int percModerate, int percHigh, int percVeryHigh] rating = <"",0,0,0>;
 	CCRiskEvaluation ccre = getCCRiskEvaluation();
@@ -79,7 +118,6 @@ public tuple[str, int, int, int] rateSystemComplexity(set[ComplexityInformation]
 		tuple[str risk, int nrOfLines] linesOfCis = <re.risk,countLinesOfCis(cisPerRisk, flis)>;
 		println(linesOfCis);
 	}
-	
 	return rating;
 }
 
@@ -98,20 +136,20 @@ public set[ComplexityInformation] gatherComplexitiesByRisk(set[ComplexityInforma
 
 public int countLinesOfCis(set[ComplexityInformation] cisPerRisk, set[FileLineInformation] flis) {
 	int count = 0;
-	println("cisPerRisk = <size(cisPerRisk)>; flis = <size(flis)>");
-	list[ComplexityInformation] l = [top(toList(cisPerRisk))];
-
-	for(<_,_,_,impl> <- l) {	
-//	for(<_,_,_,impl> <- cisPerRisk) {
+	set[FileLineInformation] tempFlis = flis;
+	println("\n/*****countLinesOfCis (per risk) *******/");
+	for(<_,_,_,locInfo> <- cisPerRisk) {
 		int i = 0;
-		for (fli <- flis) {
-			if (findVolumeLocInStatement(fli.fileLocation, impl)) {
-				println("inside if <i>.");
-				i += 1;
+		for (fli <- tempFlis) {
+			if (findLocInfoInVolumeInfo(fli.fileLocation, locInfo)) {
+//				println("location = <locInfo>; linesOfCode = <fli.linesOfCode>");
 				count += fli.linesOfCode;
+				tempFlis -= fli;
 			}
 		}
-	}	
+		println("Total for this <locInfo> = <count>"); 
+	}
+//	println("Total for this risk = <count>"); 
 	return count;	
 }
 
@@ -127,34 +165,11 @@ public void rateSystem() {
 	println(rating);
 }
 
-public bool findVolumeLocInStatement(loc l, Statement s) {
-l = |project://Jabberpoint/src/MenuController.java|(2500,107,<70,3>,<73,4>);
-	bool found = false;
-	visit(s) {
-		case \declarationStatement(stmt): {
-			println("<stmt.src>");
-			found = stmt.src == l;
-			println("<stmt.src>");
-			if (found) return found;
-   		}
-    }
-	return found;
-}
-
-public bool findVolumeLocInStatement2(loc l, Statement s) {
-l = |project://Jabberpoint/src/MenuController.java|(2500,107,<70,3>,<73,4>);
-	bool found = false;
-	visit(s) {
-		case \declarationStatement(stmt): {
-			methodOffset = l.offset;
-			methodLength = l.length;
-			srcOffset = stmt.src.offset;
-			srcLength = stmt.src.length;
-			printl("methodOffset = <l.offset>; methodLength = <l.length>; srcOffset = <stmt.src.offset>; srcLength = <stmt.src.length>");
-			found = (srcOffset >= methodOffset && srcOffset + srcLength <= methodOffset + methodLength);
-			println("<found>");
-			if (found) return found;
-   		}
-    }
-	return found;
+public bool findLocInfoInVolumeInfo(loc fileLocation, LocInfo locInfo) {
+	//print("method: <fileLocation.uri> CONTAINS? complexity: <locInfo.locationUri> IS ");
+	if (fileLocation.uri == locInfo.locationUri && fileLocation.offset <= locInfo.offset && fileLocation.length + fileLocation.offset >= locInfo.length + locInfo.offset) {
+	//	println("true");
+		return true;
+	}
+	return false;
 }

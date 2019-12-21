@@ -7,7 +7,8 @@ import lang::java::jdt::m3::AST;
 import lang::java::m3::AST;
 import util::Resources;
 
-alias ComplexityInformation = tuple[loc location,str name ,int complexity, tuple[loc,int,int,int,int,int,int] locInfo];
+alias LocInfo = tuple[str locationUri,int offset,int length,int beginline,int begincolumn,int endline,int endcolumn];
+alias ComplexityInformation = tuple[loc location,str name ,int complexity, LocInfo locInfo];
 /**
  * param projectlocation
  * return a list of tuples with file location, method name and complexity number.
@@ -21,32 +22,53 @@ public set[ComplexityInformation] calculateComplexities(loc project) {
 	for (loc file <- javafiles) {
 		complexities += calculateMethodComplexity(file);
 	}
-	println("#complexities = <size(complexities)>");
+//	println("#complexities = <size(complexities)>");
 	return complexities;
+}
+
+public set[ComplexityInformation] calculateComplexities2(/*loc project*/) {
+	loc PROJECT = |project://Jabberpoint|;
+	M3 model = createM3FromEclipseProject(PROJECT); 
+//    rel[loc,loc] methods =  { <x,y> | <x,y> <- model.declarations, x.scheme=="java+method" || x.scheme=="java+constructor"};
+    rel[loc,loc] methods =  { <x,y> | <x,y> <- model.declarations, x.scheme=="java+constructor"};
+    rel[loc,loc] submethods = { <x,y> | <x,y> <- model.containment};
+    println("methods = <methods>");
+    set[ComplexityInformation] cis = {};
+    tuple[loc,loc] example = toList(methods)[0];
+    for (<m,l> <- methods) {  
+    	cis = calculateMethodComplexity(l);  
+	}                   
+	println("#cis = <size(cis)>");
+	return cis;
 }
 
 public set[ComplexityInformation] calculateMethodComplexity(loc file) {
 //println(readFile(file));
 	Declaration ast = createAstFromFile(file, false);
+	println(ast);
 	set[ComplexityInformation] methodComplexities = {};
 	int cCount;
 	str name;
-	tuple[loc location,int offset,int length,int beginline,int begincolumn,int endline,int endcolumn] locInfo;
+	LocInfo locInfo;
+int i = 0;	
 	
 	visit(ast) {
 		case \method(a,methodName,c,d,impl): {
+		i += 1;
 			locInfo = getLocationInformation(impl);
 			name = methodName;
 			cCount = calculateMethodComplexity(\method(a,name,c,d,impl));
 			methodComplexities += <file,name,cCount,locInfo>;
 		}
 		case \constructor(methodName,c,d,impl): {
+		i += 1;
 			locInfo = getLocationInformation(impl);
 			name = methodName;
 			cCount = calculateMethodComplexity(\constructor(name,c,d,impl));
 			methodComplexities += <file,name,cCount,locInfo>;
 		}
 	}
+	println("after visit: i = <i>");
 	return methodComplexities;
 }
 
@@ -170,7 +192,7 @@ public str toString(ComplexityInformation ci) {
 	return s;
 }
 
-public str toCSV(list[ComplexityInformation] cis) {
+public str toCSV(set[ComplexityInformation] cis) {
 	str header = "location,name,complexity\n";	
 	str s = "";
 	int i = 1;
@@ -184,8 +206,8 @@ public str toCSV(list[ComplexityInformation] cis) {
 	return header + s;
 }
 
-public tuple[loc,int,int,int,int,int,int] getLocationInformation(Statement impl) {
-	tuple[loc location,int offset,int length,int beginline,int begincolumn,int endline,int endcolumn] locInfo;
+public LocInfo getLocationInformation(Statement impl) {
+	LocInfo locInfo;
 
 			str implStr = toString(impl);
 //			println(impl);
@@ -212,8 +234,7 @@ public tuple[loc,int,int,int,int,int,int] getLocationInformation(Statement impl)
 				println("endline: <endline>");
 				println("endcolumn: <endcolumn>");
 */						
-				loc methodLocation = toLocation(location);
-				locInfo = <methodLocation, toInt(offset), toInt(length), toInt(beginline), toInt(begincolumn), toInt(endline), toInt(endcolumn)>; 
+				locInfo = <location, toInt(offset), toInt(length), toInt(beginline), toInt(begincolumn), toInt(endline), toInt(endcolumn)>; 
 //				println(<locInfo>);
 			}
 			return locInfo;			

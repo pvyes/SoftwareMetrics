@@ -17,19 +17,12 @@ alias FileLineInformation = tuple[loc fileLocation, int nrOfLines, int nrOfBlank
 public set[FileLineInformation] countLinesOfCodePerMethod(loc project) {;
     M3 model = createM3FromEclipseProject(project); 
     rel[loc,loc] methods =  { <x,y> | <x,y> <- model.declarations, x.scheme=="java+method" || x.scheme=="java+constructor"};                     
-//    print("#methods = ");
-//    println(size(methods));
-/*
-	set[loc] s = {|java+constructor:///smallsql/database/Distinct2/Distinct2(smallsql.database.RowSource,smallsql.database.Expressions)|,|java+method:///smallsql/database/UnionAll/getDataType(int)|,|java+method:///smallsql/database/SSResultSet/updateTime(java.lang.String,java.sql.Time)|,|java+constructor:///smallsql/database/StorePage/StorePage(byte%5B%5D,int,java.nio.channels.FileChannel,long)|,|java+method:///smallsql/database/ViewResult/insertRow(smallsql.database.Expression%5B%5D)|,|java+method:///smallsql/database/SSDriver/getMajorVersion()|,|java+method:///smallsql/database/ExpressionFunctionExp/getDouble()|,|java+method:///smallsql/database/SSDatabaseMetaData/getConnection()|,|java+method:///smallsql/database/SSResultSet/deleteRow()|,|java+constructor:///smallsql/database/ViewResult/ViewResult(smallsql.database.View)|,|java+method:///smallsql/database/SSCallableStatement/getBigDecimal(int,int)|};
-    rel[loc,loc] methodCheck = domainR(methods, s);
-    println(size(methodCheck));
-	list[FileLineInformation] flis = [countLinesOfCodePerFile(l) | <m,l> <- methodCheck]; 
-*/
 	set[FileLineInformation] flis = {countLinesOfCodePerFile(m,l) | <m,l> <- methods};
 	return flis;
-}	
+}
 
 public FileLineInformation countLinesOfCodePerFile(loc name, loc file) {
+
 	FileLineInformation fileLineInformation = <file, 0, 0, 0, 0, 0>;	
 	//total number of lines
 	list[str] lines = readFileLines(file);
@@ -91,7 +84,7 @@ public FileLineInformation countLinesOfCodePerMethod(loc file) {
 	int nrOfStarCommentLines = countNrOfStarCommentLines(file);
 	fileLineInformation.nrOfStarCommentLines = nrOfStarCommentLines;
 	
-//	print("Total # of comment lines using /* in <file> = ");
+//	print("Total # of comment lines using slash with star in <file> = ");
 //	println(nrOfStarCommentLines);
 	
 	int finalCount = nrOfLines - (nrOfBlankLines + nrOfSlashCommentLines + nrOfStarCommentLines);
