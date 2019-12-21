@@ -7,24 +7,25 @@ import lang::java::jdt::m3::AST;
 import lang::java::m3::AST;
 import util::Resources;
 
+alias ComplexityInformation = tuple[loc location,str name ,int complexity, Statement implementation];
+
 /**
  * param projectlocation
- * return a list of tuples with file location, method name and complexity number.
+ * return a set of tuples with file location, method name and complexity number.
  */
-public list[tuple[loc,str,int]] calculateComplexities(/*Resource project*/) {
-	loc PROJECT = |project://SmallSQL-master/|;
-	Resource project = getProject(PROJECT);
-	set[loc] javafiles = { f | /file(f) <- project, f.extension == "java"};
+public set[ComplexityInformation] calculateComplexities(loc project) {
+	Resource projectR = getProject(project);
+	set[loc] javafiles = { f | /file(f) <- projectR, f.extension == "java"};
 //	print("#files = ");
 //	println(size(javafiles));
-	list[tuple[loc,str,int]] complexities = [];
+	set[ComplexityInformation] complexities = {};
 	for (loc file <- javafiles) {
 		complexities += calculateMethodComplexity(file);
 	}
 //	println(size(complexities));
 	return complexities;
 }
-
+/*
 public list[tuple[loc,str,int]] getMethodInformation(loc file) {
 	Declaration ast = createAstFromFile(file, false);
 	list[tuple[loc,str,int]] methodComplexities = [];
@@ -44,17 +45,17 @@ public list[tuple[loc,str,int]] getMethodInformation(loc file) {
     }
 	return methodComplexities;
 }
-
+*/
 /**
  *Calculates the complexities of the methods of a file
  *param location file
- *return a list of tuples containing the location of the file, the method's name and its complexity list[<location,name,complexity>]
+ *return a set of tuples containing the location of the file, the method's name and its complexity set[<location,name,complexity>]
  */
-public list[tuple[loc,str,int]] calculateMethodComplexity(loc file) {
+public set[tuple[loc file, str methodName , int mc]] calculateMethodComplexityDRAFT(loc file) {
 	Declaration ast = createAstFromFile(file, false);
-	list[tuple[loc,str,int]] methodComplexities = [];
+	set[tuple[loc,str,int]] methodComplexities = {};
 	visit(ast) {
-		case \method(t, name, d, e, impl): {
+		case \method(t, name, decls, e, impl): {
 			int cCount = calculateMethodComplexity(\method(t, name,d,e,impl));			
 			tuple[loc file, str methodName , int mc] methodComplexity = <file ,name, cCount>;
 			methodComplexities += methodComplexity;
@@ -68,13 +69,29 @@ public list[tuple[loc,str,int]] calculateMethodComplexity(loc file) {
 	return methodComplexities;
 }
 
+public set[ComplexityInformation] calculateMethodComplexity(loc file) {
+	Declaration ast = createAstFromFile(file, false);
+	set[tuple[loc,str,int,Statement]] methodComplexities = {};
+	visit(ast) {
+		case \method(t, name, d, e, impl): {
+			int cCount = calculateMethodComplexity(\method(t, name,d,e,impl));			
+			tuple[loc file, str methodName , int mc, Statement implementation] methodComplexity = <file ,name, cCount, impl>;
+			methodComplexities += methodComplexity;
+   	}
+		case \constructor(name,d,e,impl): {
+			int cCount = calculateMethodComplexity(\constructor(name,d,e,impl));			
+			tuple[loc file, str methodName , int mc, Statement implementation] methodComplexity = <file ,name, cCount, impl>;
+			methodComplexities += methodComplexity;
+    	}
+    }
+	return methodComplexities;
+}
 /**
  * Calculates the cyclomatic complexity of one method.
  * param a declaration (method or constructor)
  * return the complexity.
  */
 public int calculateMethodComplexity(Declaration method) {
-println(method);
 	int complexity = 1;
 	visit(method) { 		 
     	case \if(cond, _): {   	
@@ -134,4 +151,13 @@ public int countOrConditions(str text) {
 	}
 	//println(count);
 	return count;
+}
+
+public str toString(ComplexityInformation ci) {
+	loc l = ci.location;
+	str s = l.path;
+	s += "\t<ci.name>";
+	s += "\t<ci.complexity>";
+	s += "\n";
+	return s;
 }

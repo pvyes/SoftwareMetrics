@@ -14,13 +14,6 @@ alias FileLineInformation = tuple[loc fileLocation, int nrOfLines, int nrOfBlank
  * thirdly count all comment lines (starting with // or between /* and its counterpart 
  * except if these are surrounded by a pair of quotes)
  */
- 
-public set[FileLineInformation] countLOC(Resource project) {
-	set[loc] javafiles = { f | /file(f) <- project, f.extension == "java"};
-	set[FileLineInformation] linesOfCode = {countLinesOfCodePerFile(f) | f <- javafiles};
-	return linesOfCode;
-}
-
 public set[FileLineInformation] countLinesOfCodePerMethod(loc project) {;
     M3 model = createM3FromEclipseProject(project); 
     rel[loc,loc] methods =  { <x,y> | <x,y> <- model.declarations, x.scheme=="java+method" || x.scheme=="java+constructor"};                     
@@ -32,12 +25,12 @@ public set[FileLineInformation] countLinesOfCodePerMethod(loc project) {;
     println(size(methodCheck));
 	list[FileLineInformation] flis = [countLinesOfCodePerFile(l) | <m,l> <- methodCheck]; 
 */
-	set[FileLineInformation] flis = {countLinesOfCodePerFile(m,l) | <m,l> <- methods}; 
+	set[FileLineInformation] flis = {countLinesOfCodePerFile(m,l) | <m,l> <- methods};
 	return flis;
 }	
 
 public FileLineInformation countLinesOfCodePerFile(loc name, loc file) {
-	FileLineInformation fileLineInformation = <name, 0, 0, 0, 0, 0>;	
+	FileLineInformation fileLineInformation = <file, 0, 0, 0, 0, 0>;	
 	//total number of lines
 	list[str] lines = readFileLines(file);
 	int nrOfLines= size(lines);

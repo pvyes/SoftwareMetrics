@@ -2,13 +2,15 @@ module Analytics
 
 import Prelude;
 import analysis::statistics::Descriptive;
+import lang::java::jdt::m3::Core;
+import lang::java::m3::AST;
 import util::Math;
  
-import Volume;
-import Complexity;
+import Volumes;
+import Complexities;
 
-alias CCRiskEvaluation = lrel[int min,int max, str risk];
-alias MaxRelativeLOC = lrel[str rank, int moderate, int high, int very_high];
+alias CCRiskEvaluation = rel[int min,int max, str risk];
+alias MaxRelativeLOC = rel[str rank, int moderate, int high, int very_high];
 
 // Methods analyzing the volume (on set[fileLineInformation])
 //	All calculatings are made using the lines of codes
@@ -50,12 +52,13 @@ public set[loc] getMethodsWithMedianVolume(set[FileLineInformation] flis) {
 /*Functions calculating the complexity
 */
 public int getMaxInt() {
-	return roundexp(ln(2) * 31) - 1;
+	return round(exp(ln(2) * 31)) - 1;
 }
 
 public CCRiskEvaluation getCCRiskEvaluation() {
 	int maxInt = getMaxInt();
-	return [<0,10,"low">,<11,20,"moderate">,<21,50,"high">,<51,maxInt,"very high">];
+//	return [<0,10,"low">,<11,20,"moderate">,<21,50,"high">,<51,maxInt,"very high">];
+	return {<0,1,"low">,<2,2,"moderate">,<3,4,"high">,<5,maxInt,"very high">};
 }
 
 public MaxRelativeLOC getMaxRelativeLOC() {
@@ -68,15 +71,90 @@ public MaxRelativeLOC getMaxRelativeLOC() {
 	];
 }
 
+public tuple[str, int, int, int] rateSystemComplexity(set[ComplexityInformation] cis, set[FileLineInformation] flis) {
+	tuple[str rank, int percModerate, int percHigh, int percVeryHigh] rating = <"",0,0,0>;
+	CCRiskEvaluation ccre = getCCRiskEvaluation();
+	for (re <- ccre) {
+		set[ComplexityInformation] cisPerRisk = gatherComplexitiesByRisk(cis, re.risk);
+		tuple[str risk, int nrOfLines] linesOfCis = <re.risk,countLinesOfCis(cisPerRisk, flis)>;
+		println(linesOfCis);
+	}
+	
+	return rating;
+}
+
+/**
+ * gather the complexityInformation per risk.
+ * return:  a set of ComplexityInformations belonging to a same risk level as defined in CCRiskInformation. 
+ */
+public set[ComplexityInformation] gatherComplexitiesByRisk(set[ComplexityInformation] cis, str risk) {
+	CCRiskEvaluation ccre = getCCRiskEvaluation();
+	set[ComplexityInformation] cisPerRisk = {};
+	for (re <- ccre, re.risk == risk) {
+		cisPerRisk = {ci | ci <- cis, ci.complexity <= re.max && ci.complexity >= re.min};
+	}
+	return cisPerRisk;
+}
+
+public int countLinesOfCis(set[ComplexityInformation] cisPerRisk, set[FileLineInformation] flis) {
+	int count = 0;
+	println("cisPerRisk = <size(cisPerRisk)>; flis = <size(flis)>");
+	list[ComplexityInformation] l = [top(toList(cisPerRisk))];
+
+	for(<_,_,_,impl> <- l) {	
+//	for(<_,_,_,impl> <- cisPerRisk) {
+		int i = 0;
+		for (fli <- flis) {
+			if (findVolumeLocInStatement(fli.fileLocation, impl)) {
+				println("inside if <i>.");
+				i += 1;
+				count += fli.linesOfCode;
+			}
+		}
+	}	
+	return count;	
+}
+
 public void rateSystem() {
 	map[str,int] percPerRisk = ("low":67,"moderate":20,"high":7,"very high":3);
 	MaxRelativeLOC mrl = getMaxRelativeLOC();
 	str rating = mrl[4].rank;
 	for (int i <- [4..-1]) {
-	println(i);
 		if (percPerRisk["moderate"] <= mrl[i].moderate && percPerRisk["high"] <= mrl[i].high && percPerRisk["very high"] <= mrl[i].very_high) { 
 			rating = mrl[i].rank;
 		}
 	}
 	println(rating);
+}
+
+public bool findVolumeLocInStatement(loc l, Statement s) {
+l = |project://Jabberpoint/src/MenuController.java|(2500,107,<70,3>,<73,4>);
+	bool found = false;
+	visit(s) {
+		case \declarationStatement(stmt): {
+			println("<stmt.src>");
+			found = stmt.src == l;
+			println("<stmt.src>");
+			if (found) return found;
+   		}
+    }
+	return found;
+}
+
+public bool findVolumeLocInStatement2(loc l, Statement s) {
+l = |project://Jabberpoint/src/MenuController.java|(2500,107,<70,3>,<73,4>);
+	bool found = false;
+	visit(s) {
+		case \declarationStatement(stmt): {
+			methodOffset = l.offset;
+			methodLength = l.length;
+			srcOffset = stmt.src.offset;
+			srcLength = stmt.src.length;
+			printl("methodOffset = <l.offset>; methodLength = <l.length>; srcOffset = <stmt.src.offset>; srcLength = <stmt.src.length>");
+			found = (srcOffset >= methodOffset && srcOffset + srcLength <= methodOffset + methodLength);
+			println("<found>");
+			if (found) return found;
+   		}
+    }
+	return found;
 }
