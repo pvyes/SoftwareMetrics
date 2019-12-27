@@ -5,8 +5,13 @@ import Prelude;
 import lang::java::jdt::m3::Core;
 import lang::java::m3::AST;
 import util::Resources;
+import util::Math;
 
+import Complexities;
+import Volumes;
+import Analytics;
 import UnitSize;
+import Duplication;
 
 public void main() {
 	loc PROJECT = |project://SmallSQL-master/|;
@@ -16,109 +21,97 @@ public void main() {
 	print("# of java files = ");
 	println(size(javafiles));
 	
-	print("Lines of code per method");
+	// Unit Size
 	set[Declaration] declarations = createAstsFromEclipseProject(project, true);
 	rel[loc, Statement] methods = getMethodsAST(declarations);
 	list[int] unitSizesPerMethod = getLinesOfCodePerMethod(methods);
-	map[str, int] unitSizeRiskMetrics = getRiskMetrics(unitSizesPerMethod);
-		
-	print("Lines of code excluding blank lines, comments and documentation = ");
-	println(countLOC(javafiles));
-		
+	map[str, int] unitSizeRates =	getUnitSizeRates(unitSizesPerMethod);
+
+	println("***************************************");
+    println("Evaluating Unit size metric");
+    println("Unit Size risk rates is <unitSizeRates>");
+
+	//Duplication
+	map[str, int] duplicationMetrics = getCodeDuplicationMetric(toList(domain(methods)));
+	
+	println("***************************************");
+    println("Evaluating the Duplication metric: ");
+    println("Number of duplications: " + duplicationMetrics["duplications"]);
+    println("Duplication rate: " + getDuplicationRate(duplicationMetrics["duplications"], duplicationMetrics["total"]));
+
+	println("***************************************");
+	println("Evaluating volumes\n");
+	//set[FileLineInformation] flis = countLOC(project);
+	print("Size of methods = ");
+	println(size(flis));
+	println("\nLines of code of methods excluding blank lines, comments and documentation:");
+	print("Total Volume for <PROJECT> = ");
+	println(getTotalVolume(flis));
+	int siz = getHighestVolumeFile(flis);
+	int nrOfMethods = size(getMethodsWithHighestVolume(flis));
+	println("Highest Volume method for <PROJECT> = <siz> (<nrOfMethods> methods(s))");
+	siz = getLowestVolumeFile(flis);
+	nrOfMethods = size(getMethodsWithLowestVolume(flis));
+	println("Lowest Volume method for <PROJECT> = <siz> (<nrOfMethods> methods(s))");
+	print("Average Volume for <PROJECT> = ");
+	println(toInt(getAverageVolumeFile(flis)));
+	real med = getMedianVolumeFile(flis);
+	nrOfMethods = size(getMethodsWithMedianVolume(flis));
+	println("Median Volume method for <PROJECT> = <med> (<nrOfMethods> methods(s))");
+	
+	println();
+	set[ComplexityInformation] cis = calculateComplexities(PROJECT);
+	println("***************************************");
+	println("Evaluating complexities\n");
+	set[tuple[str,int,int]] locPerRisk = getLinesOfCodePerRisk(cis,flis);
+	println("Lines of code per risk\nriskname, number of methods in this risk category, lines of codes in this risk category):\n<locPerRisk>");
+	set[tuple[str,int,int,real]] percPerRisk = getPercentageOfLinesOfCodePerRisk(cis,flis);
+	println("Lines of code per risk\nriskname, lines of codes in this risk category, the percentage relative to the total Volume):\n<percPerRisk>");
+	
+	
+	println("***************************************");
+	println("\nDetails on Volumes:");
+	for(fli <- flis) {
+		print(toString(fli));
+	}
+
+	println();
+	println("***************************************");	
+	println("\nDetails on Complexities:");
+	for (ci <- cis) {
+		print(toString(ci));
+	}
+	
+	println(toCSV(flis));
+	println();
+	println(toCSV(cis));		
 }
 
-/* This method counts the lines of code over all the java-files, comments and blank lines excluded.
- * First count all lines
- * secondly count all blank lines
- * thirdly count all comment lines (starting with // or between /* and its counterpart 
- * except if these are surrounded by a pair of quotes)
- */
 
-private int countLOC(set[loc] files) {
-	int linesOfCode = sum([countLocPerFile(f) | f <- files]);
-	return linesOfCode;
-}
-
-private int countLocPerFile(loc file) {
-	//total number of lines
-	list[str] lines = readFileLines(file);
-	int nrOfLines= size(lines);
-//	print("Total #lines in Distinct.java = ");
-//	println(nrOfLines);
+public map[str, int] getRiskMetrics(list[int] unitSizesPerMethod) {
 	
-	//number of blank lines	
-	list[str] blanklines = [ line | line <- lines, /^\s*$/ := line];
-	int nrOfBlankLines= size(blanklines);
-//	println("Total # of blank lines in <file> = <nrOfBlankLines>");
+	map[str, int] categories = ();
+	categories["simple"] = 0;
+	categories["moderate"] = 0;
+	categories["complex"] = 0;
+	categories["untestable"] = 0;
+   	categories["total"] = 0;
 	
-	//number of commentlines using '//'
-	list[str] slashCommentlines = [ line | line <- lines, /^\s*\/{2,}/ := line];
-	int nrOfSlashCommentlines= size(slashCommentlines);
-//	print("Total # of comment lines using // in <file> = ");
-//	println(nrOfSlashCommentlines);
+	for (unitSize <- unitSizesPerMethod) {
 	
-	//number of commentlines using the slash with star
-	str fileString = readFile(file);
-	str tempString = fileString;
-	int count = 0;
-
-	while (/<firstbegin:.*?(?=\/\*)><begintag:\/\*><firstend:.*>/s := tempString) {
-		
-		int nrOfParentheses = countNrOfParentheses(firstbegin);
-		if (nrOfParentheses % 2 != 0) {
-				bool parenthesesFound = (/^<begin:.*?(?=["'])>["']<end:.*>/s := firstend);
-				tempString = end;
-				firstbegin = "";
-				firstend = "";
-		} else {
-
-			if ((firstbegin != "") && !(/\n\s*$/ := firstbegin || (/^\s*$/  := firstbegin))) {
-				count -= 1;
-			}
-	
-			if (/<newbegin:.*?(?=\*\/)><endtag:\*\/><newend:.*>/s := firstend) {
-				count += readNrOfLines(newbegin);
-				if (!(/^[\s]*\n/ := newend)) {
-					count -= 1;
-				}
-				tempString = newend;		
-			} else {
-					println("Exception: bad construction");
-			}
+		//CC Risk evaluation table from paper "A Pratical Model for Measuring Maintanability"
+		if (unitSize in [1..11]) {
+			categories["low"] += unitSize;
+		} else if (unitSize in [11..21]) {
+			categories["moderate"] += unitSize;
+		} else if (unitSize in [21..51]) {
+			categories["complex"] += unitSize;
+		} else if (unitSize > 50) {
+			categories["untestable"] += unitSize;
 		}
+		
+		categories["total"] += unitSize;
 	}
-	int countRest = readNrOfLines(tempString);
-	int nrOfStarCommentLines = count;
-//	print("Total # of comment lines using /* in <file> = ");
-//	println(nrOfStarCommentLines);
 	
-	int linesOfCode = nrOfLines - (nrOfBlankLines + nrOfSlashCommentlines + nrOfStarCommentLines);
-	
-	return linesOfCode ;
-}	
-
-private int readNrOfLines(str text) {
-	int count = 0; 
-	if (text == "") {
-		return 0;
-	} else {
-		count = 1;
-	}
-	while (/^<begin:[^\n]*>\n<end:.*>/s := text) {
-		count += 1;
-		text = begin + end;
-	}
-	return count;
-}
-
-private int countNrOfParentheses(str text) {
-	int count = 0; 
-	if (text == "") {
-		return 0;
-	}
-	while (/^<begin:.*>["']<end:.*>/s := text) {
-		count += 1;
-		text = begin + end;
-	}
-	return count;
+	return categories;
 }
