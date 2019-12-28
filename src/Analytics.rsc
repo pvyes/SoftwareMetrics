@@ -10,7 +10,7 @@ import Volumes;
 import Complexities;
 
 alias CCRiskEvaluation = rel[int min,int max, str risk];
-alias MaxRelativeLOC = rel[str rank, int moderate, int high, int very_high];
+alias MaxRelativeLOC = lrel[str rank, int moderate, int high, int very_high];
 
 // Methods analyzing the volume (on set[fileLineInformation])
 //	All calculatings are made using the lines of codes
@@ -137,7 +137,7 @@ public set[ComplexityInformation] gatherComplexitiesByRisk(set[ComplexityInforma
 public int countLinesOfCis(set[ComplexityInformation] cisPerRisk, set[FileLineInformation] flis) {
 	int count = 0;
 	set[FileLineInformation] tempFlis = flis;
-	println("\n/*****countLinesOfCis (per risk) *******/");
+//	println("\n/*****countLinesOfCis (per risk) *******/");
 	for(<_,_,_,locInfo> <- cisPerRisk) {
 		int i = 0;
 		for (fli <- tempFlis) {
@@ -147,14 +147,13 @@ public int countLinesOfCis(set[ComplexityInformation] cisPerRisk, set[FileLineIn
 				tempFlis -= fli;
 			}
 		}
-		println("Total for this <locInfo> = <count>"); 
+//		println("Total for this <locInfo> = <count>"); 
 	}
 //	println("Total for this risk = <count>"); 
 	return count;	
 }
 
-public void rateSystem() {
-	map[str,int] percPerRisk = ("low":67,"moderate":20,"high":7,"very high":3);
+public str rateSystem(map[str, real] percPerRisk) {
 	MaxRelativeLOC mrl = getMaxRelativeLOC();
 	str rating = mrl[4].rank;
 	for (int i <- [4..-1]) {
@@ -162,7 +161,7 @@ public void rateSystem() {
 			rating = mrl[i].rank;
 		}
 	}
-	println(rating);
+	return rating;
 }
 
 public bool findLocInfoInVolumeInfo(loc fileLocation, LocInfo locInfo) {

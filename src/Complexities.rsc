@@ -38,14 +38,14 @@ public set[ComplexityInformation] calculateComplexities2(/*loc project*/) {
     for (<m,l> <- methods) {  
     	cis = calculateMethodComplexity(l);  
 	}                   
-	println("#cis = <size(cis)>");
+//	println("#cis = <size(cis)>");
 	return cis;
 }
 
 public set[ComplexityInformation] calculateMethodComplexity(loc file) {
 //println(readFile(file));
 	Declaration ast = createAstFromFile(file, false);
-	println(ast);
+//	println(ast);
 	set[ComplexityInformation] methodComplexities = {};
 	int cCount;
 	str name;
@@ -68,7 +68,7 @@ int i = 0;
 			methodComplexities += <file,name,cCount,locInfo>;
 		}
 	}
-	println("after visit: i = <i>");
+//	println("after visit: i = <i>");
 	return methodComplexities;
 }
 

@@ -12,7 +12,7 @@ import Volumes;
 import Analytics;
 
 public void main() {
-	loc PROJECT = |project://Jabberpoint|;
+	loc PROJECT = |project://hsqldb|;
 	Resource project = getProject(PROJECT);
 	set[loc] javafiles = { f | /file(f) <- project, f.extension == "java"};
 
@@ -49,22 +49,24 @@ public void main() {
 	println("Lines of code per risk\nriskname, number of methods in this risk category, lines of codes in this risk category):\n<locPerRisk>");
 	set[tuple[str,int,int,real]] percPerRisk = getPercentageOfLinesOfCodePerRisk(cis,flis);
 	println("Lines of code per risk\nriskname, lines of codes in this risk category, the percentage relative to the total Volume):\n<percPerRisk>");
-	
+	map[str,real] percPerRiskMap = (risk : perc | <risk,_,_,perc> <- percPerRisk);
+	str systemRating = rateSystem(percPerRiskMap);
+	println("System global complexity ranking = <systemRating>");
 	
 	println("***************************************");
-	println("\nDetails on Volumes:");
+/*	println("\nDetails on Volumes:");
 	for(fli <- flis) {
 		print(toString(fli));
 	}
-
+*/
 	println();
 	println("***************************************");	
-	println("\nDetails on Complexities:");
+/*	println("\nDetails on Complexities:");
 	for (ci <- cis) {
 		print(toString(ci));
 	}
-	
-	println(toCSV(flis));
+*/	
+/*	println(toCSV(flis));
 	println();
 	println(toCSV(cis));
-}
+*/}
