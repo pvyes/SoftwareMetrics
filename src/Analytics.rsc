@@ -12,6 +12,20 @@ import Complexities;
 alias CCRiskEvaluation = rel[int min,int max, str risk];
 alias MaxRelativeLOC = lrel[str rank, int moderate, int high, int very_high];
 
+alias UnitSizeEvaluation = rel[str rank, int size];
+alias DuplicationEvaluation = rel[str rank, real rate];
+
+data UnitSizeRating = Simple()
+          | MoreComplex()
+          | Complex()
+          | Untestable();
+
+data DuplicationRating = VeryLow()
+          | Low()
+          | Moderate()
+          | High()
+          | VeryHigh();
+
 // Methods analyzing the volume (on set[fileLineInformation])
 //	All calculatings are made using the lines of codes
 
@@ -138,17 +152,20 @@ public int countLinesOfCis(set[ComplexityInformation] cisPerRisk, set[FileLineIn
 	int count = 0;
 	set[FileLineInformation] tempFlis = flis;
 //	println("\n/*****countLinesOfCis (per risk) *******/");
-	for(<_,_,_,locInfo> <- cisPerRisk) {
-		int i = 0;
+	for(<location,_,_> <- cisPerRisk) {
+//		println(countLinesOfCodePerFile(location).linesOfCode);
+
+		count += countLinesOfCodePerMethod(location).linesOfCode;
+/*		int i = 0;
 		for (fli <- tempFlis) {
-			if (findLocInfoInVolumeInfo(fli.fileLocation, locInfo)) {
+			if (findLocInfoInVolumeInfo(fli.fileLocation, location)) {
 //				println("location = <locInfo>; linesOfCode = <fli.linesOfCode>");
 				count += fli.linesOfCode;
 				tempFlis -= fli;
 			}
 		}
 //		println("Total for this <locInfo> = <count>"); 
-	}
+*/	}
 //	println("Total for this risk = <count>"); 
 	return count;	
 }
@@ -171,4 +188,56 @@ public bool findLocInfoInVolumeInfo(loc fileLocation, LocInfo locInfo) {
 		return true;
 	}
 	return false;
+}
+
+//Rating unitsizes
+
+public map[str, int] getUnitSizeRates(list[int] unitSizesPerMethod) {
+	
+	map[str, int] categories = ();
+	categories["Simple"] = 0;
+	categories["MoreComplex"] = 0;
+	categories["Complex"] = 0;
+	categories["Untestable"] = 0;
+	
+	for (unitSize <- unitSizesPerMethod) {
+	
+		//CC Risk evaluation table from paper "A Pratical Model for Measuring Maintanability"
+		if (unitSize in [1..11]) {
+			categories["Simple"] += 1;
+		} else if (unitSize in [11..51]) {
+			categories["MoreComplex"] += 1;
+		} else if (unitSize in [51..101]) {
+			categories["Complex"] += 1;
+		} else if (unitSize > 100) {
+			categories["Untestable"] += 1;
+		}
+	}
+	
+	return categories;
+}
+
+//Metrics of duplication
+
+public int CODE_BLOCK_SIZE = 6;
+
+public str getDuplicationRate(int numberOfDuplications, int totalLinesOfCode) {
+	int duplicationRate= ((toReal(CODE_BLOCK_SIZE) * toReal(numberOfDuplications))/totalLinesOfCode)*100;
+	str rate = "--";
+	
+	
+	if (duplicationRate in [0..3]) {
+		rate = "--";
+	} else if (duplicationRate in [3..5]) {
+		rate = "+";
+	} else if (duplicationRate in [5..10]) {
+		rate = "o";
+	} else if (duplicationRate in [10..20]) {
+		rate = "-";
+	} else {
+		rate = "--";
+	}
+		
+	
+	return rate;
 }

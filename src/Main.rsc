@@ -10,16 +10,41 @@ import util::Math;
 import Complexities;
 import Volumes;
 import Analytics;
+import UnitSize;
+import Duplication;
 
 public void main() {
-	loc PROJECT = |project://hsqldb|;
+	loc PROJECT = |project://smallsql|;
 	Resource project = getProject(PROJECT);
+	M3 model = createM3FromEclipseProject(PROJECT);
 	set[loc] javafiles = { f | /file(f) <- project, f.extension == "java"};
 
 	print("# of java files = ");
 	println(size(javafiles));
-	set[FileLineInformation] flis = countLinesOfCodePerMethod(PROJECT);
+	set[FileLineInformation] flis = countLinesOfCodePerProject(model);
 /*	set[FileLineInformation] flis = getLinesOfCodePerFile(PROJECT);*/
+
+// Unit Size
+
+/*    M3 model = createM3FromEclipseProject(PROJECT);
+	set[Declaration] declarations = model.declarations;
+	rel[loc, Statement] methods = getMethodsAST(declarations);
+	list[int] unitSizesPerMethod = getLinesOfCodePerMethod(methods);
+	map[str, int] unitSizeRates =	getUnitSizeRates(unitSizesPerMethod);
+	println("***************************************");
+    println("Evaluating Unit size metric");
+    println("Unit Size risk rates is <unitSizeRates>");
+*/
+
+	//Duplication
+/*	map[str, int] duplicationMetrics = getCodeDuplicationMetric(toList(domain(methods)));
+	
+	println("***************************************");
+    println("Evaluating the Duplication metric: ");
+    println("Number of duplications: " + duplicationMetrics["duplications"]);
+    println("Duplication rate: " + getDuplicationRate(duplicationMetrics["duplications"], duplicationMetrics["total"]));
+
+*/
 
 	println("***************************************");
 	println("Evaluating volumes\n");
