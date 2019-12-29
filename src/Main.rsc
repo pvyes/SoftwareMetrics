@@ -14,7 +14,7 @@ import UnitSize;
 import Duplication;
 
 public void main() {
-	loc PROJECT = |project://smallsql|;
+	loc PROJECT = |project://Jabberpoint|;
 	Resource project = getProject(PROJECT);
 	M3 model = createM3FromEclipseProject(PROJECT);
 	set[loc] javafiles = { f | /file(f) <- project, f.extension == "java"};
@@ -22,6 +22,8 @@ public void main() {
 	print("# of java files = ");
 	println(size(javafiles));
 	set[FileLineInformation] flis = countLinesOfCodePerProject(model);
+	int volume = getTotalVolume(flis);
+	
 /*	set[FileLineInformation] flis = getLinesOfCodePerFile(PROJECT);*/
 
 // Unit Size
@@ -52,8 +54,9 @@ public void main() {
 	print("Size of methods = ");
 	println(size(flis));
 	println("\nLines of code of methods excluding blank lines, comments and documentation:");
-	print("Total Volume for <PROJECT> = ");
-	println(getTotalVolume(flis));
+	println("Total Volume for <PROJECT> = <volume>");
+	print("Ranking for the total volume of this Java system = ");
+	println(rankTotalVolume(volume));
 	int siz = getHighestVolumeFile(flis);
 	int nrOfMethods = size(getMethodsWithHighestVolume(flis));
 	println("Highest Volume method for <PROJECT> = <siz> (<nrOfMethods> methods(s))");
@@ -75,9 +78,20 @@ public void main() {
 	set[tuple[str,int,int,real]] percPerRisk = getPercentageOfLinesOfCodePerRisk(cis,flis);
 	println("Lines of code per risk\nriskname, lines of codes in this risk category, the percentage relative to the total Volume):\n<percPerRisk>");
 	map[str,real] percPerRiskMap = (risk : perc | <risk,_,_,perc> <- percPerRisk);
-	str systemRating = rateSystem(percPerRiskMap);
+	str systemRating = rateSystemComplexity(percPerRiskMap);
 	println("System global complexity ranking = <systemRating>");
-	
+
+	println();
+	println("***************************************");
+	println("Evaluating unit sizes\n");
+	println("Risks for unit sizes\n(riskname, number of methods, linesOfCodein this category):");
+	println(getMethodsPerUnitSizeRank(flis));
+	println("Risks for unit sizes in percentages\n(riskname, lines of Code in this category, totalVolume, percentage of linesOfCodein this category):");
+	println(getPercentageOfLinesOfCodePerRisk (flis));
+	percPerRiskMap = (risk : perc | <risk,_,_,perc> <- percPerRisk);
+	systemRating = rateSystemUnitsize(percPerRiskMap);
+	println("System global unit size ranking = <systemRating>");
+	println();
 	println("***************************************");
 /*	println("\nDetails on Volumes:");
 	for(fli <- flis) {
