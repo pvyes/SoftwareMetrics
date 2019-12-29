@@ -14,30 +14,39 @@ import UnitSize;
 import Duplication;
 
 public void main() {
-	loc PROJECT = |project://SmallSQL-master/|;
+	loc PROJECT = |project://Jabberpoint|;
 	Resource project = getProject(PROJECT);
+	M3 model = createM3FromEclipseProject(PROJECT);
 	set[loc] javafiles = { f | /file(f) <- project, f.extension == "java"};
 
 	print("# of java files = ");
 	println(size(javafiles));
+	set[FileLineInformation] flis = countLinesOfCodePerProject(model);
+	int volume = getTotalVolume(flis);
 	
-	// Unit Size
-	set[Declaration] declarations = createAstsFromEclipseProject(project, true);
+/*	set[FileLineInformation] flis = getLinesOfCodePerFile(PROJECT);*/
+
+// Unit Size
+
+/*    M3 model = createM3FromEclipseProject(PROJECT);
+	set[Declaration] declarations = model.declarations;
 	rel[loc, Statement] methods = getMethodsAST(declarations);
 	list[int] unitSizesPerMethod = getLinesOfCodePerMethod(methods);
 	map[str, int] unitSizeRates =	getUnitSizeRates(unitSizesPerMethod);
-
 	println("***************************************");
     println("Evaluating Unit size metric");
     println("Unit Size risk rates is <unitSizeRates>");
+*/
 
 	//Duplication
-	map[str, int] duplicationMetrics = getCodeDuplicationMetric(toList(domain(methods)));
+/*	map[str, int] duplicationMetrics = getCodeDuplicationMetric(toList(domain(methods)));
 	
 	println("***************************************");
     println("Evaluating the Duplication metric: ");
     println("Number of duplications: " + duplicationMetrics["duplications"]);
     println("Duplication rate: " + getDuplicationRate(duplicationMetrics["duplications"], duplicationMetrics["total"]));
+
+*/
 
 	println("***************************************");
 	println("Evaluating volumes\n");
@@ -45,8 +54,9 @@ public void main() {
 	print("Size of methods = ");
 	println(size(flis));
 	println("\nLines of code of methods excluding blank lines, comments and documentation:");
-	print("Total Volume for <PROJECT> = ");
-	println(getTotalVolume(flis));
+	println("Total Volume for <PROJECT> = <volume>");
+	print("Ranking for the total volume of this Java system = ");
+	println(rankTotalVolume(volume));
 	int siz = getHighestVolumeFile(flis);
 	int nrOfMethods = size(getMethodsWithHighestVolume(flis));
 	println("Highest Volume method for <PROJECT> = <siz> (<nrOfMethods> methods(s))");
@@ -67,51 +77,57 @@ public void main() {
 	println("Lines of code per risk\nriskname, number of methods in this risk category, lines of codes in this risk category):\n<locPerRisk>");
 	set[tuple[str,int,int,real]] percPerRisk = getPercentageOfLinesOfCodePerRisk(cis,flis);
 	println("Lines of code per risk\nriskname, lines of codes in this risk category, the percentage relative to the total Volume):\n<percPerRisk>");
-	
-	
+	map[str,real] percPerRiskMap = (risk : perc | <risk,_,_,perc> <- percPerRisk);
+	str systemRating = rateSystemComplexity(percPerRiskMap);
+	println("System global complexity ranking = <systemRating>");
+
+	println();
 	println("***************************************");
-	println("\nDetails on Volumes:");
+	println("Evaluating unit sizes\n");
+	println("Risks for unit sizes\n(riskname, number of methods, linesOfCodein this category):");
+	println(getMethodsPerUnitSizeRank(flis));
+	println("Risks for unit sizes in percentages\n(riskname, lines of Code in this category, totalVolume, percentage of linesOfCodein this category):");
+	println(getPercentageOfLinesOfCodePerRisk (flis));
+	percPerRiskMap = (risk : perc | <risk,_,_,perc> <- percPerRisk);
+	systemRating = rateSystemUnitsize(percPerRiskMap);
+	println("System global unit size ranking = <systemRating>");
+	println();
+	println("***************************************");
+	
+	//Duplication
+	
+	M3 model = createM3FromEclipseProject(PROJECT);
+	set[Declaration] declarations = model.declarations;
+	rel[loc, Statement] methods = getMethodsAST(declarations);
+	
+	map[str, int] metrics = getCodeDuplicationMetric(toList(domain(methods)));
+	println();
+	println("***************************************");
+	println("Evaluation duplications\n");
+	println("Rank for duplications in percentages:");
+	
+	println(getPrecentageOfDuplcations(flis));
+	println("Risks for unit sizes in percentages\n(riskname, lines of Code in this category, totalVolume, percentage of linesOfCodein this category):");
+	println(getPercentageOfLinesOfCodePerRisk (flis));
+	percPerRiskMap = (risk : perc | <risk,_,_,perc> <- percPerRisk);
+	systemRating = rateSystemUnitsize(percPerRiskMap);
+	println("System global unit size ranking = <systemRating>");
+	println();
+	println("***************************************");
+
+/*	println("\nDetails on Volumes:");
 	for(fli <- flis) {
 		print(toString(fli));
 	}
-
+*/
 	println();
 	println("***************************************");	
-	println("\nDetails on Complexities:");
+/*	println("\nDetails on Complexities:");
 	for (ci <- cis) {
 		print(toString(ci));
 	}
-	
-	println(toCSV(flis));
+*/	
+/*	println(toCSV(flis));
 	println();
-	println(toCSV(cis));		
-}
-
-
-public map[str, int] getRiskMetrics(list[int] unitSizesPerMethod) {
-	
-	map[str, int] categories = ();
-	categories["simple"] = 0;
-	categories["moderate"] = 0;
-	categories["complex"] = 0;
-	categories["untestable"] = 0;
-   	categories["total"] = 0;
-	
-	for (unitSize <- unitSizesPerMethod) {
-	
-		//CC Risk evaluation table from paper "A Pratical Model for Measuring Maintanability"
-		if (unitSize in [1..11]) {
-			categories["low"] += unitSize;
-		} else if (unitSize in [11..21]) {
-			categories["moderate"] += unitSize;
-		} else if (unitSize in [21..51]) {
-			categories["complex"] += unitSize;
-		} else if (unitSize > 50) {
-			categories["untestable"] += unitSize;
-		}
-		
-		categories["total"] += unitSize;
-	}
-	
-	return categories;
-}
+	println(toCSV(cis));
+*/}
