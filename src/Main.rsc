@@ -13,8 +13,9 @@ import Analytics;
 import UnitSize;
 import Duplication;
 
+public loc PROJECT = |project://JabberPoint|;
 public void main() {
-	loc PROJECT = |project://Jabberpoint|;
+	//loc PROJECT = |project://JabberpointSSS|;
 	Resource project = getProject(PROJECT);
 	M3 model = createM3FromEclipseProject(PROJECT);
 	set[loc] javafiles = { f | /file(f) <- project, f.extension == "java"};
@@ -47,7 +48,7 @@ public void main() {
     println("Duplication rate: " + getDuplicationRate(duplicationMetrics["duplications"], duplicationMetrics["total"]));
 
 */
-
+/*
 	println("***************************************");
 	println("Evaluating volumes\n");
 	//set[FileLineInformation] flis = countLOC(project);
@@ -93,25 +94,20 @@ public void main() {
 	println("System global unit size ranking = <systemRating>");
 	println();
 	println("***************************************");
-	
+	*/
 	//Duplication
 	
-	M3 model = createM3FromEclipseProject(PROJECT);
-	set[Declaration] declarations = model.declarations;
-	rel[loc, Statement] methods = getMethodsAST(declarations);
+	set[loc] methodLocations = {methodLocation | <methodLocation,_,_,_,_,_> <- flis};
 	
-	map[str, int] metrics = getCodeDuplicationMetric(toList(domain(methods)));
+	DuplicationInformaton dupInfo = getCodeDuplicationInformation(toList(methodLocations));
+	int duplicationRate = getDuplicationPercentage(dupInfo.numberOfDuplications, dupInfo.totalLinesOfCode);
+	 
 	println();
 	println("***************************************");
 	println("Evaluation duplications\n");
-	println("Rank for duplications in percentages:");
-	
-	println(getPrecentageOfDuplcations(flis));
-	println("Risks for unit sizes in percentages\n(riskname, lines of Code in this category, totalVolume, percentage of linesOfCodein this category):");
-	println(getPercentageOfLinesOfCodePerRisk (flis));
-	percPerRiskMap = (risk : perc | <risk,_,_,perc> <- percPerRisk);
-	systemRating = rateSystemUnitsize(percPerRiskMap);
-	println("System global unit size ranking = <systemRating>");
+	println("Absolute numbers: <dupInfo>");
+	println("Duplication percentage: <duplicationRate>");
+	println("Rank for duplications in percentages: <rankDuplication(duplicationRate)>");
 	println();
 	println("***************************************");
 

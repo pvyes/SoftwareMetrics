@@ -262,11 +262,11 @@ public int getDuplicationPercentage(int numberOfDuplications, int totalLinesOfCo
 
 public str rankDuplication(int duplicationRate) {
 	DuplicationRanking rankings = getDuplicationRanking();
-	str rating = rankings[4].rank;
+	str rank = rankings[4].rank;
 	for (int i <- [4..-1]) {
-		if (volume <= rankings[i].max) { 
+		if (duplicationRate <= rankings[i].max) { 
 			rating = rankings[i].rank;
 		}
 	}
-	return rating;
+	return rank;
 }

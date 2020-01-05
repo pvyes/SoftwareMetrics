@@ -8,7 +8,8 @@ import lang::java::m3::AST;
 import util::Resources;
 
 alias LocInfo = tuple[str locationUri,int offset,int length,int beginline,int begincolumn,int endline,int endcolumn];
-alias ComplexityInformation = tuple[loc location,str name ,int complexity, LocInfo locInfo];
+//alias ComplexityInformation = tuple[loc location,str name ,int complexity, LocInfo locInfo];
+alias ComplexityInformation = tuple[loc location,str name ,int complexity];
 /**
  * param projectlocation
  * return a list of tuples with file location, method name and complexity number.
@@ -38,37 +39,38 @@ public set[ComplexityInformation] calculateComplexities2(/*loc project*/) {
     for (<m,l> <- methods) {  
     	cis = calculateMethodComplexity(l);  
 	}                   
-	println("#cis = <size(cis)>");
+//	println("#cis = <size(cis)>");
 	return cis;
 }
 
 public set[ComplexityInformation] calculateMethodComplexity(loc file) {
 //println(readFile(file));
 	Declaration ast = createAstFromFile(file, false);
-	println(ast);
+//	println(ast);
 	set[ComplexityInformation] methodComplexities = {};
 	int cCount;
 	str name;
-	LocInfo locInfo;
+	loc location;
+//	LocInfo locInfo;
 int i = 0;	
 	
 	visit(ast) {
 		case \method(a,methodName,c,d,impl): {
 		i += 1;
-			locInfo = getLocationInformation(impl);
+			location = impl.src;
 			name = methodName;
 			cCount = calculateMethodComplexity(\method(a,name,c,d,impl));
-			methodComplexities += <file,name,cCount,locInfo>;
+			methodComplexities += <location,name,cCount>;
 		}
 		case \constructor(methodName,c,d,impl): {
 		i += 1;
-			locInfo = getLocationInformation(impl);
+			location = impl.src;
 			name = methodName;
 			cCount = calculateMethodComplexity(\constructor(name,c,d,impl));
-			methodComplexities += <file,name,cCount,locInfo>;
+			methodComplexities += <location,name,cCount>;
 		}
 	}
-	println("after visit: i = <i>");
+//	println("after visit: i = <i>");
 	return methodComplexities;
 }
 
@@ -205,7 +207,7 @@ public str toCSV(set[ComplexityInformation] cis) {
 	}
 	return header + s;
 }
-
+/*
 public LocInfo getLocationInformation(Statement impl) {
 	LocInfo locInfo;
 
@@ -226,16 +228,17 @@ public LocInfo getLocationInformation(Statement impl) {
 				bool regexFound6 = /<endcolumn:.*?>\><end6:.*>/ := end5;
 //				println("end: <end4>");
 								
-/*				println("location: <location>");
+			println("location: <location>");
 				println("offset: <offset>");
 				println("length: <length>");
 				println("beginline: <beginline>");
 				println("begincolumn: <begincolumn>");
 				println("endline: <endline>");
 				println("endcolumn: <endcolumn>");
-*/						
+						
 				locInfo = <location, toInt(offset), toInt(length), toInt(beginline), toInt(begincolumn), toInt(endline), toInt(endcolumn)>; 
 //				println(<locInfo>);
 			}
 			return locInfo;			
 }
+*/

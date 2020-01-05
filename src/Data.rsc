@@ -70,7 +70,7 @@ public LinesOfJavaCodeRanking getLinesOfJavaCodeMethodsRanking() {
 /**
  * Returns a tuple of type DuplicationRanking to rank the duplication containing rank, min duplication percentage, max duplication percentage.
  */
- public DuplicationRank getDuplicationRanking() {
+ public DuplicationRanking getDuplicationRanking() {
 	return [
 		<"++", 0, 3>,
 		<"+", 3, 5>,
