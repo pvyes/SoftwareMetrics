@@ -16,7 +16,7 @@ alias UnitSizeEvaluation = rel[str rank, int size];
 //	All calculatings are made using the lines of codes
 
 public int getTotalVolume(set[FileLineInformation] flis) {
-	return sum([linesOfCode | <_,_,_,_,_,linesOfCode> <- flis]);
+	return sum([0]+[linesOfCode | <_,_,_,_,_,linesOfCode> <- flis]);
 }
 
 public int getHighestVolumeFile(set[FileLineInformation] flis) {
@@ -257,7 +257,8 @@ public map[str, int] getUnitSizeRates(list[int] unitSizesPerMethod) {
 public int CODE_BLOCK_SIZE = 6;
 
 public int getDuplicationPercentage(int numberOfDuplications, int totalLinesOfCode) {
-	return duplicationPercentage= percent((toReal(CODE_BLOCK_SIZE) * toReal(numberOfDuplications)),totalLinesOfCode);
+	
+	return duplicationPercentage= percent(toReal(numberOfDuplications),toReal(totalLinesOfCode));
 }
 
 public str rankDuplication(int duplicationRate) {
@@ -265,7 +266,7 @@ public str rankDuplication(int duplicationRate) {
 	str rank = rankings[4].rank;
 	for (int i <- [4..-1]) {
 		if (duplicationRate <= rankings[i].max) { 
-			rating = rankings[i].rank;
+			rank = rankings[i].rank;
 		}
 	}
 	return rank;

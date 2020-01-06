@@ -13,7 +13,7 @@ import Analytics;
 import UnitSize;
 import Duplication;
 
-public loc PROJECT = |project://JabberPoint|;
+public loc PROJECT = |project://smallsql|;
 public void main() {
 	//loc PROJECT = |project://JabberpointSSS|;
 	Resource project = getProject(PROJECT);
@@ -24,7 +24,7 @@ public void main() {
 	println(size(javafiles));
 	set[FileLineInformation] flis = countLinesOfCodePerProject(model);
 	int volume = getTotalVolume(flis);
-	
+	print("volume calculated");
 /*	set[FileLineInformation] flis = getLinesOfCodePerFile(PROJECT);*/
 
 // Unit Size
@@ -100,14 +100,15 @@ public void main() {
 	set[loc] methodLocations = {methodLocation | <methodLocation,_,_,_,_,_> <- flis};
 	
 	DuplicationInformaton dupInfo = getCodeDuplicationInformation(toList(methodLocations));
+	println("dup info: <dupInfo>");
 	int duplicationRate = getDuplicationPercentage(dupInfo.numberOfDuplications, dupInfo.totalLinesOfCode);
 	 
 	println();
 	println("***************************************");
 	println("Evaluation duplications\n");
-	println("Absolute numbers: <dupInfo>");
+	println("Number of duplicated lines of code: <dupInfo.numberOfDuplications>");
 	println("Duplication percentage: <duplicationRate>");
-	println("Rank for duplications in percentages: <rankDuplication(duplicationRate)>");
+	println("Duplication Rank: <rankDuplication(duplicationRate)>");
 	println();
 	println("***************************************");
 
