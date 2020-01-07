@@ -14,8 +14,9 @@ alias FileLineInformation = tuple[loc fileLocation, int nrOfLines, int nrOfBlank
  * thirdly count all comment lines (starting with // or between /* and its counterpart 
  * except if these are surrounded by a pair of quotes)
  */
-public set[FileLineInformation] countLinesOfCodePerProject(M3 model) {; 
-    rel[loc,loc] methods =  { <x,y> | <x,y> <- model.declarations, x.scheme=="java+method" || x.scheme=="java+constructor"};                     
+public set[FileLineInformation] countLinesOfCodePerProject(loc project) {
+	M3 model = createM3FromEclipseProject(project); 
+    rel[loc,loc] methods =  { <x,y> | <x,y> <- model.declarations, x.scheme=="java+method" || x.scheme=="java+constructor"};                   
 	set[FileLineInformation] flis = {countLinesOfCodePerMethod(l) | <m,l> <- methods};
 	return flis;
 }
@@ -27,71 +28,26 @@ public FileLineInformation countLinesOfCodePerMethod(loc method) {
 	list[str] lines = readFileLines(method);
 	int nrOfLines= size(lines);
 	fileLineInformation.nrOfLines = nrOfLines;
-//	println("Total #lines in <method> = <nrOfLines>");
 	
 	//number of blank lines	
 	list[str] blanklines = [ line | line <- lines, /^\s*$/ := line];
 	int nrOfBlankLines= size(blanklines);
 	fileLineInformation.nrOfBlankLines = nrOfBlankLines;
-//	println("Total # of blank lines in <method> = <nrOfBlankLines>");
 	
 	//number of commentlines using '//'
 	list[str] slashCommentLines = [ line | line <- lines, /^\s*\/{2,}/ := line];
 	int nrOfSlashCommentLines= size(slashCommentLines);
 	fileLineInformation.nrOfSlashCommentLines = nrOfSlashCommentLines;
-	
-//	print("Total # of comment lines using // in <method> = ");
-//	println(nrOfSlashCommentLines);
-	
+
 	//number of commentlines using the slash with star
 	int nrOfStarCommentLines = countNrOfStarCommentLines(method);
 	fileLineInformation.nrOfStarCommentLines = nrOfStarCommentLines;
 	
-//	print("Total # of comment lines using /* in <method> = ");
-//	println(nrOfStarCommentLines);
-	
 	int finalCount = nrOfLines - (nrOfBlankLines + nrOfSlashCommentLines + nrOfStarCommentLines);
 	fileLineInformation.linesOfCode = finalCount;
-	//println(fileLineInformation);
-	return fileLineInformation;
-}
 
-/*
-public FileLineInformation countLinesOfCodePerMethod(loc file) {
-	FileLineInformation fileLineInformation = <file, 0, 0, 0, 0, 0>;
-	//total number of lines
-	list[str] lines = readFileLines(file);
-	int nrOfLines= size(lines);
-	fileLineInformation.nrOfLines = nrOfLines;
-//	println("Total #lines in <file> = <nrOfLines>");
-	
-	//number of blank lines	
-	list[str] blanklines = [ line | line <- lines, /^\s*$/ := line];
-	int nrOfBlankLines= size(blanklines);
-	fileLineInformation.nrOfBlankLines = nrOfBlankLines;
-//	println("Total # of blank lines in <file> = <nrOfBlankLines>");
-	
-	//number of commentlines using '//'
-	list[str] slashCommentLines = [ line | line <- lines, /^\s*\/{2,}/ := line];
-	int nrOfSlashCommentLines= size(slashCommentLines);
-	fileLineInformation.nrOfSlashCommentLines = nrOfSlashCommentLines;
-	
-//	print("Total # of comment lines using // in <file> = ");
-//	println(nrOfSlashCommentLines);
-	
-	//number of commentlines using the slash with star
-	int nrOfStarCommentLines = countNrOfStarCommentLines(file);
-	fileLineInformation.nrOfStarCommentLines = nrOfStarCommentLines;
-	
-//	print("Total # of comment lines using slash with star in <file> = ");
-//	println(nrOfStarCommentLines);
-	
-	int finalCount = nrOfLines - (nrOfBlankLines + nrOfSlashCommentLines + nrOfStarCommentLines);
-	fileLineInformation.linesOfCode = finalCount;
-	//println(fileLineInformation);
 	return fileLineInformation;
 }
-*/
 
 //returns -1 if a bad construction has been found.
 private int countNrOfStarCommentLines(file) {

@@ -5,20 +5,21 @@ import util::Math;
 alias CCRiskEvaluation = rel[str risk, int min,int max];
 alias MaxRelativeLOC = lrel[str rank, int moderate, int high, int very_high];
 alias LinesOfJavaCodeRanking = lrel[str rank, int min, int max];
+alias DuplicationRanking = lrel[str rank, int min, int max];
 
 int maxInt = round(exp(ln(2) * 31)) - 1;
 
 /**
- * Returns a tuple of type CCRiskEvaluation to measure the cyclomatic complexity risk evaluation, containing min complexity, max complexity and risk.
+ * Returns a relation type CCRiskEvaluation to measure the cyclomatic complexity risk evaluation, containing min complexity, max complexity and risk.
  */
 public CCRiskEvaluation getCCRiskEvaluation() {
-	/*	return [
+	return {
 		<"low",0,10>,
 		<"moderate", 11,20>,
 		<"high", 21,50>,
 		<"very high",51,maxInt>
-	];
-*/
+	};
+/*
 	//for testing with Jabberpoint use below:
 	return {
 		<"low",0,1>,
@@ -26,10 +27,11 @@ public CCRiskEvaluation getCCRiskEvaluation() {
 		<"high",4,4>,
 		<"very high",5,maxInt>
 	};
+*/
 }
 
 /**
- * Returns a tuple of type MaxRelativeLoc to measure the percentage of lines of code of a specific cc risk, containing rank, min complexity, max complexity and risk.
+ * Returns a listrelation of type MaxRelativeLoc to measure the percentage of lines of code of a specific cc risk, containing rank, min complexity, max complexity and risk.
  */
 public MaxRelativeLOC getMaxRelativeLOC() {
 	return [
@@ -42,7 +44,7 @@ public MaxRelativeLOC getMaxRelativeLOC() {
 }
 
 /**
- * Returns a tuple of type LinesOfJavaCodeRanking to rank the volume lines of code containing rank, min loc's, max loc's.
+ * Returns a listrelation of type LinesOfJavaCodeRanking to rank the volume lines of code containing rank, min loc's, max loc's.
  */
 public LinesOfJavaCodeRanking getLinesOfJavaCodeTotalVolumeRanking() {
 	return [
@@ -55,7 +57,7 @@ public LinesOfJavaCodeRanking getLinesOfJavaCodeTotalVolumeRanking() {
 }
 
 /**
- * Returns a tuple of type LinesOfJavaMethodsRanking to rank the volume lines of code per method containing rank, min loc's, max loc's.
+ * Returns a listrelation of type LinesOfJavaMethodsRanking to rank the volume lines of code per method containing rank, min loc's, max loc's.
  */
 public LinesOfJavaCodeRanking getLinesOfJavaCodeMethodsRanking() {
 	return [
@@ -63,5 +65,18 @@ public LinesOfJavaCodeRanking getLinesOfJavaCodeMethodsRanking() {
 		<"moderate", 7, 8>,
 		<"high", 9, 14>,
 		<"very high", 15, maxInt>
+	];
+}
+
+/**
+ * Returns a listrelation of type DuplicationRanking to rank the duplication containing rank, min duplication percentage, max duplication percentage.
+ */
+ public DuplicationRanking getDuplicationRanking() {
+	return [
+		<"++", 0, 3>,
+		<"+", 3, 5>,
+		<"o", 5, 10>,
+		<"-", 10, 20>,
+		<"--", 20, 100>
 	];
 }

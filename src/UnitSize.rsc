@@ -4,8 +4,6 @@ import IO;
 import lang::java::jdt::m3::AST;
 import List;
 
-import Common;
-
 public rel[loc, Statement] getMethodsAST(set[Declaration] decls) {
    //set[Declaration] decls = createAstsFromFiles(bestanden, false);
    rel[loc, Statement] result = [];
@@ -24,7 +22,7 @@ public rel[loc, int] getLinesOfCodePerMethod(rel[loc, Statement] methods){
 	}
 	return result; 
 }
-
+/*
 public map[str, int] getRiskMetrics(list[int] unitSizesPerMethod) {
 	
 	map[str, int] categories = ();
@@ -52,3 +50,4 @@ public map[str, int] getRiskMetrics(list[int] unitSizesPerMethod) {
 	
 	return categories;
 }
+*/

@@ -10,102 +10,128 @@ import util::Math;
 import Complexities;
 import Volumes;
 import Analytics;
-import UnitSize;
 import Duplication;
 
 public void main() {
-	loc PROJECT = |project://Jabberpoint|;
-	Resource project = getProject(PROJECT);
-	M3 model = createM3FromEclipseProject(PROJECT);
-	set[loc] javafiles = { f | /file(f) <- project, f.extension == "java"};
+	loc PROJECT = |project://smallsql|;
+	println("Building model and calculating analytics... Please be patient.\n");
 
+	set[FileLineInformation] flis = countLinesOfCodePerProject(PROJECT);
+	set[ComplexityInformation] cis = calculateComplexities(PROJECT);
+
+	printGeneralInformation(PROJECT);
+	printVolumeAnalytics(PROJECT, flis);
+	printComplexityInformation(PROJECT, flis, cis);
+	printUnitSizeInformation(PROJECT, flis);
+//	printDuplicationInformation(PROJECT, flis);
+
+	printVolumeDetails(flis);
+	printComplexityDetails(cis);
+}
+
+public void	printGeneralInformation(loc project) {
+	Resource projectResource = getProject(project);
+	set[loc] javafiles = { f | /file(f) <- projectResource, f.extension == "java"};
+	
+	println();
+	println("General Information\n");
+	println("***************************************");
+	println();	
+	println("Projectlocation = <project>"); 
 	print("# of java files = ");
-	println(size(javafiles));
-	set[FileLineInformation] flis = countLinesOfCodePerProject(model);
+	println(size(javafiles));	
+}
+
+public void	printVolumeAnalytics(loc project, set[FileLineInformation] flis) {
 	int volume = getTotalVolume(flis);
-	
-/*	set[FileLineInformation] flis = getLinesOfCodePerFile(PROJECT);*/
-
-// Unit Size
-
-/*    M3 model = createM3FromEclipseProject(PROJECT);
-	set[Declaration] declarations = model.declarations;
-	rel[loc, Statement] methods = getMethodsAST(declarations);
-	list[int] unitSizesPerMethod = getLinesOfCodePerMethod(methods);
-	map[str, int] unitSizeRates =	getUnitSizeRates(unitSizesPerMethod);
-	println("***************************************");
-    println("Evaluating Unit size metric");
-    println("Unit Size risk rates is <unitSizeRates>");
-*/
-
-	//Duplication
-/*	map[str, int] duplicationMetrics = getCodeDuplicationMetric(toList(domain(methods)));
-	
-	println("***************************************");
-    println("Evaluating the Duplication metric: ");
-    println("Number of duplications: " + duplicationMetrics["duplications"]);
-    println("Duplication rate: " + getDuplicationRate(duplicationMetrics["duplications"], duplicationMetrics["total"]));
-
-*/
-
-	println("***************************************");
-	println("Evaluating volumes\n");
+	println();
+	println("Evaluating volumes");
+	println("***************************************\n");
 	//set[FileLineInformation] flis = countLOC(project);
-	print("Size of methods = ");
+	print("Number of methods = ");
 	println(size(flis));
-	println("\nLines of code of methods excluding blank lines, comments and documentation:");
-	println("Total Volume for <PROJECT> = <volume>");
+	println("Lines of code of methods excluding blank lines, comments and documentation:");
+	println("Total Volume for <project> = <volume>");
 	print("Ranking for the total volume of this Java system = ");
 	println(rankTotalVolume(volume));
+	println();
 	int siz = getHighestVolumeFile(flis);
 	int nrOfMethods = size(getMethodsWithHighestVolume(flis));
-	println("Highest Volume method for <PROJECT> = <siz> (<nrOfMethods> methods(s))");
+	println("Highest Volume method for <project> = <siz> (<nrOfMethods> methods(s))");
 	siz = getLowestVolumeFile(flis);
 	nrOfMethods = size(getMethodsWithLowestVolume(flis));
-	println("Lowest Volume method for <PROJECT> = <siz> (<nrOfMethods> methods(s))");
-	print("Average Volume for <PROJECT> = ");
+	println("Lowest Volume method for <project> = <siz> (<nrOfMethods> methods(s))");
+	print("Average Volume for <project> = ");
 	println(toInt(getAverageVolumeFile(flis)));
 	real med = getMedianVolumeFile(flis);
 	nrOfMethods = size(getMethodsWithMedianVolume(flis));
-	println("Median Volume method for <PROJECT> = <med> (<nrOfMethods> methods(s))");
-	
+	println("Median Volume method for <project> = <med> (<nrOfMethods> methods(s))");
+}
+
+public void	printComplexityInformation(loc project, set[FileLineInformation] flis, set[ComplexityInformation] cis) {	
 	println();
-	set[ComplexityInformation] cis = calculateComplexities(PROJECT);
-	println("***************************************");
-	println("Evaluating complexities\n");
+	println("Evaluating complexities");
+	println("***************************************\n");
+
 	set[tuple[str,int,int]] locPerRisk = getLinesOfCodePerRisk(cis,flis);
-	println("Lines of code per risk\nriskname, number of methods in this risk category, lines of codes in this risk category):\n<locPerRisk>");
+	println("Lines of code per risk (absolute)\n(riskname, number of methods in this risk category, lines of codes in this risk category):\n<locPerRisk>");
+
 	set[tuple[str,int,int,real]] percPerRisk = getPercentageOfLinesOfCodePerRisk(cis,flis);
-	println("Lines of code per risk\nriskname, lines of codes in this risk category, the percentage relative to the total Volume):\n<percPerRisk>");
+	println("Lines of code per risk (percentage)\n(riskname, lines of codes in this risk category, the percentage relative to the total Volume):\n<percPerRisk>");
+
 	map[str,real] percPerRiskMap = (risk : perc | <risk,_,_,perc> <- percPerRisk);
 	str systemRating = rateSystemComplexity(percPerRiskMap);
-	println("System global complexity ranking = <systemRating>");
-
 	println();
-	println("***************************************");
-	println("Evaluating unit sizes\n");
-	println("Risks for unit sizes\n(riskname, number of methods, linesOfCodein this category):");
+	println("System global complexity ranking = <systemRating>");
+}
+
+public void	printUnitSizeInformation(loc project, set[FileLineInformation] flis) {
+	println();
+	println("Evaluating unit sizes");
+	println("***************************************\n");
+	
+	println("Risks for unit sizes\n(riskname, number of methods, linesOfCode in this category):");
 	println(getMethodsPerUnitSizeRank(flis));
-	println("Risks for unit sizes in percentages\n(riskname, lines of Code in this category, totalVolume, percentage of linesOfCodein this category):");
-	println(getPercentageOfLinesOfCodePerRisk (flis));
+	
+	println("Risks for unit sizes in percentages\n(riskname, lines of Code in this category, totalVolume, percentage of linesOfCode in this category):");
+	percPerRisk = getPercentageOfLinesOfCodePerRisk (flis);
+	println(percPerRisk);
+	
 	percPerRiskMap = (risk : perc | <risk,_,_,perc> <- percPerRisk);
 	systemRating = rateSystemUnitsize(percPerRiskMap);
-	println("System global unit size ranking = <systemRating>");
 	println();
-	println("***************************************");
-/*	println("\nDetails on Volumes:");
+	println("System global unit size ranking = <systemRating>");
+}
+
+public void	printDuplicationInformation(loc project, set[FileLineInformation] flis) {
+	println();
+	println("Evaluating duplications");
+	println("***************************************\n");
+	
+	set[loc] methodLocations = {methodLocation | <methodLocation,_,_,_,_,_> <- flis};	
+	DuplicationInformaton dupInfo = getCodeDuplicationInformation(toList(methodLocations));
+	int duplicationRate = getDuplicationPercentage(dupInfo.numberOfDuplications, dupInfo.totalLinesOfCode);	 
+
+	println("Absolute numbers: <dupInfo>");
+	println("Duplication percentage: <duplicationRate>");
+	println();
+	println("Rank for duplications in percentages: <rankDuplication(duplicationRate)>");
+}
+
+public void	printVolumeDetails(set[FileLineInformation]flis) {
+	println();
+	println("Details on Volumes:");
+	println("***************************************\n");
 	for(fli <- flis) {
 		print(toString(fli));
 	}
-*/
+}
+
+public void	printComplexityDetails(set[ComplexityInformation] cis) {
 	println();
-	println("***************************************");	
-/*	println("\nDetails on Complexities:");
+	println("Details on Complexities:");
+	println("***************************************\n");	
 	for (ci <- cis) {
 		print(toString(ci));
 	}
-*/	
-/*	println(toCSV(flis));
-	println();
-	println(toCSV(cis));
-*/}
+}

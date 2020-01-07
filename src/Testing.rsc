@@ -85,7 +85,7 @@ public void getMethodImpl() {
 }                
 
 //werkt goed om method locations te bepalen
-public void getMethodImpl() {
+public void getMethodLocations() {
 	loc projectLocation = |project://Jabberpoint|;
 	Resource projectR = getProject(projectLocation);
 	set[loc] javafiles = { f | /file(f) <- projectR, f.extension == "java"}; 
@@ -104,7 +104,7 @@ public void getMethodImpl() {
 			}
 		}
 	}
-	println("#locations = <methodLocations>");
+//	println("#locations = <methodLocations>");
 }
 
 public void testComplexities() {

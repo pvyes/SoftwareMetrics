@@ -105,24 +105,13 @@ public set[tuple[str,int,int,real]] getPercentageOfLinesOfCodePerRisk (set[Compl
 	CCRiskEvaluation ccre = getCCRiskEvaluation();
 	for (<risk,_,linesOfCode> <- ratings) {
 		real percentage = toReal(linesOfCode) / toReal(totalVolume) * 100.;
+		percentage = round(percentage, 0.01);
 		rating = <risk, linesOfCode, totalVolume, percentage>;
 		percentages += rating;
 	}
 	return percentages;	
 }
 
-/*
-public tuple[str, int, int, int] rateSystemComplexity(set[ComplexityInformation] cis, set[FileLineInformation] flis) {
-	tuple[str rank, int percModerate, int percHigh, int percVeryHigh] rating = <"",0,0,0>;
-	CCRiskEvaluation ccre = getCCRiskEvaluation();
-	for (re <- ccre) {
-		set[ComplexityInformation] cisPerRisk = gatherComplexitiesByRisk(cis, re.risk);
-		tuple[str risk, int nrOfLines] linesOfCis = <re.risk,countLinesOfCis(cisPerRisk, flis)>;
-//		println(linesOfCis);
-	}
-	return rating;
-}
-*/
 /**
  * gather the complexityInformation per risk.
  * return:  a set of ComplexityInformations belonging to a same risk level as defined in CCRiskInformation. 
@@ -139,22 +128,9 @@ public set[ComplexityInformation] gatherComplexitiesByRisk(set[ComplexityInforma
 public int countLinesOfCis(set[ComplexityInformation] cisPerRisk, set[FileLineInformation] flis) {
 	int count = 0;
 	set[FileLineInformation] tempFlis = flis;
-//	println("\n/*****countLinesOfCis (per risk) *******/");
 	for(<location,_,_> <- cisPerRisk) {
-//		println(countLinesOfCodePerFile(location).linesOfCode);
-
 		count += countLinesOfCodePerMethod(location).linesOfCode;
-/*		int i = 0;
-		for (fli <- tempFlis) {
-			if (findLocInfoInVolumeInfo(fli.fileLocation, location)) {
-//				println("location = <locInfo>; linesOfCode = <fli.linesOfCode>");
-				count += fli.linesOfCode;
-				tempFlis -= fli;
-			}
-		}
-//		println("Total for this <locInfo> = <count>"); 
-*/	}
-//	println("Total for this risk = <count>"); 
+	}
 	return count;	
 }
 
@@ -168,22 +144,11 @@ public str rateSystemComplexity(map[str, real] percPerRisk) {
 	}
 	return rating;
 }
-/*
-public bool findLocInfoInVolumeInfo(loc fileLocation, LocInfo locInfo) {
-	//print("method: <fileLocation.uri> CONTAINS? complexity: <locInfo.locationUri> IS ");
-	if (fileLocation.uri == locInfo.locationUri && fileLocation.offset <= locInfo.offset && fileLocation.length + fileLocation.offset >= locInfo.length + locInfo.offset) {
-	//	println("true");
-		return true;
-	}
-	return false;
-}
-*/
-
 
 //Rating unitsizes
 
 /**
- * Returns a set of tuples with the risk-name, the numberOfMethods and the linesOfCode in this risk category. 
+ * Returns a set of tuples with the rank, the numberOfMethods and the linesOfCode in this rank category. 
  */
 public set[tuple[str,int,int]] getMethodsPerUnitSizeRank (set[FileLineInformation] flis) {
 	set[tuple[str,int,int]] ratings = {};
@@ -222,6 +187,7 @@ public set[tuple[str,int,int,real]] getPercentageOfLinesOfCodePerRisk (set[FileL
 	int totalVolume = getTotalVolume(flis);;
 	for (<risk,_,linesOfCode> <- ratings) {
 		real percentage = toReal(linesOfCode) / toReal(totalVolume) * 100.;
+		percentage = round(percentage, 0.01);
 		rating = <risk, linesOfCode, totalVolume, percentage>;
 		percentages += rating;
 	}
@@ -238,53 +204,20 @@ public str rateSystemUnitsize(map[str, real] percPerRisk) {
 	}
 	return rating;
 }
-/*
-public map[str, int] getUnitSizeRates(list[int] unitSizesPerMethod) {
-	
-	map[str, int] categories = ();
-	categories["Simple"] = 0;
-	categories["MoreComplex"] = 0;
-	categories["Complex"] = 0;
-	categories["Untestable"] = 0;
-	
-	for (unitSize <- unitSizesPerMethod) {
-	
-		//CC Risk evaluation table from paper "A Pratical Model for Measuring Maintanability"
-		if (unitSize in [1..11]) {
-			categories["Simple"] += 1;
-		} else if (unitSize in [11..51]) {
-			categories["MoreComplex"] += 1;
-		} else if (unitSize in [51..101]) {
-			categories["Complex"] += 1;
-		} else if (unitSize > 100) {
-			categories["Untestable"] += 1;
-		}
-	}
-	
-	return categories;
-}
-*/
+
 //Metrics of duplication
 
-public int CODE_BLOCK_SIZE = 6;
+public int getDuplicationPercentage(int numberOfDuplications, int totalLinesOfCode) {
+	return duplicationPercentage= percent((toReal(CODE_BLOCK_SIZE) * toReal(numberOfDuplications)),totalLinesOfCode);
+}
 
-public str getDuplicationRate(int numberOfDuplications, int totalLinesOfCode) {
-	int duplicationRate= ((toReal(CODE_BLOCK_SIZE) * toReal(numberOfDuplications))/totalLinesOfCode)*100;
-	str rate = "--";
-	
-	
-	if (duplicationRate in [0..3]) {
-		rate = "--";
-	} else if (duplicationRate in [3..5]) {
-		rate = "+";
-	} else if (duplicationRate in [5..10]) {
-		rate = "o";
-	} else if (duplicationRate in [10..20]) {
-		rate = "-";
-	} else {
-		rate = "--";
+public str rankDuplication(int duplicationRate) {
+	DuplicationRanking rankings = getDuplicationRanking();
+	str rank = rankings[4].rank;
+	for (int i <- [4..-1]) {
+		if (duplicationRate <= rankings[i].max) { 
+			rank = rankings[i].rank;
+		}
 	}
-		
-	
-	return rate;
+	return rank;
 }
