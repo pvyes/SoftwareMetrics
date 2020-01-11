@@ -254,18 +254,17 @@ public map[str, int] getUnitSizeRates(list[int] unitSizesPerMethod) {
 */
 //Metrics of duplication
 
-public int CODE_BLOCK_SIZE = 6;
 
-public int getDuplicationPercentage(int numberOfDuplications, int totalLinesOfCode) {
+public real getDuplicationPercentage(int numberOfDuplications, int totalLinesOfCode) {
 	
-	return duplicationPercentage= percent(toReal(numberOfDuplications),toReal(totalLinesOfCode));
+	return duplicationPercentage= toReal(numberOfDuplications)*100/toReal(totalLinesOfCode);
 }
 
-public str rankDuplication(int duplicationRate) {
+public str rankDuplication(real duplicationRate) {
 	DuplicationRanking rankings = getDuplicationRanking();
 	str rank = rankings[4].rank;
 	for (int i <- [4..-1]) {
-		if (duplicationRate <= rankings[i].max) { 
+		if (duplicationRate < rankings[i].max) { 
 			rank = rankings[i].rank;
 		}
 	}

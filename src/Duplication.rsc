@@ -19,19 +19,18 @@ public DuplicationInformaton getCodeDuplicationInformation(list[loc] methodLocat
 {
 	//Create all code clocks
 	list[list[str]] codeBlocks = createCodeBlocks(methodLocations);	
-	println("code blocks created");
 	return <(size(codeBlocks) * CODE_BLOCK_SIZE), getDuplications(codeBlocks)>;
 }
 
 
 private int getDuplications(list[list[str]] codeBlocks){
 
-	set[str] duplications = {};
+	list[str] duplications = [];
 	
 	if(size(codeBlocks) <= 1)
 		return 0;
 	
-	while(size(codeBlocks) > CODE_BLOCK_SIZE){
+	while(size(codeBlocks) > 1){
 		pivotHead = pop(codeBlocks)[0];
 		codeBlocks = pop(codeBlocks)[1];
 		
@@ -39,9 +38,9 @@ private int getDuplications(list[list[str]] codeBlocks){
 			continue;
 			
 		if(pivotHead in codeBlocks)
-			duplications += toSet(pivotHead); //[1 | block <- codeBlocksToProcess, pivotHead == block ];
+			duplications += pivotHead; 
 	}
-	println(duplications);
+	
 	return size(duplications);
 }
 

@@ -6,6 +6,7 @@ import lang::java::jdt::m3::Core;
 import lang::java::m3::AST;
 import util::Resources;
 import util::Math;
+import Real;
 
 import Complexities;
 import Volumes;
@@ -101,13 +102,13 @@ public void main() {
 	
 	DuplicationInformaton dupInfo = getCodeDuplicationInformation(toList(methodLocations));
 	println("dup info: <dupInfo>");
-	int duplicationRate = getDuplicationPercentage(dupInfo.numberOfDuplications, dupInfo.totalLinesOfCode);
+	real duplicationRate = getDuplicationPercentage(dupInfo.numberOfDuplications, dupInfo.totalLinesOfCode);
 	 
 	println();
 	println("***************************************");
 	println("Evaluation duplications\n");
 	println("Number of duplicated lines of code: <dupInfo.numberOfDuplications>");
-	println("Duplication percentage: <duplicationRate>");
+	println("Duplication percentage: <precision(duplicationRate, 3)>");
 	println("Duplication Rank: <rankDuplication(duplicationRate)>");
 	println();
 	println("***************************************");
