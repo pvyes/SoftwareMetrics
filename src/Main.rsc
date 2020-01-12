@@ -100,14 +100,13 @@ public void main() {
 	
 	set[loc] methodLocations = {methodLocation | <methodLocation,_,_,_,_,_> <- flis};
 	
-	DuplicationInformaton dupInfo = getCodeDuplicationInformation(toList(methodLocations));
-	println("dup info: <dupInfo>");
-	real duplicationRate = getDuplicationPercentage(dupInfo.numberOfDuplications, dupInfo.totalLinesOfCode);
+	int numberOfDuplications = getCodeDuplicationInformation(toList(methodLocations));
+	real duplicationRate = getDuplicationPercentage(numberOfDuplications, volume);
 	 
 	println();
 	println("***************************************");
 	println("Evaluation duplications\n");
-	println("Number of duplicated lines of code: <dupInfo.numberOfDuplications>");
+	println("Number of duplicated lines of code: <numberOfDuplications>");
 	println("Duplication percentage: <precision(duplicationRate, 3)>");
 	println("Duplication Rank: <rankDuplication(duplicationRate)>");
 	println();

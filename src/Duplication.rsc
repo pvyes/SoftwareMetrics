@@ -15,11 +15,11 @@ public int CODE_BLOCK_SIZE = 6;
 alias DuplicationInformaton = tuple[int totalLinesOfCode, int numberOfDuplications];
 
 
-public DuplicationInformaton getCodeDuplicationInformation(list[loc] methodLocations)
+public int getCodeDuplicationInformation(list[loc] methodLocations)
 {
 	//Create all code clocks
 	list[list[str]] codeBlocks = createCodeBlocks(methodLocations);	
-	return <(size(codeBlocks) * CODE_BLOCK_SIZE), getDuplications(codeBlocks)>;
+	return getDuplications(codeBlocks);
 }
 
 
