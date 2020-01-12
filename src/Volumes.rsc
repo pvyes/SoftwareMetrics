@@ -1,6 +1,5 @@
 module Volumes
 
-import IO;
 import Prelude;
 import lang::java::jdt::m3::Core;
 import lang::java::m3::AST;
@@ -14,14 +13,14 @@ alias FileLineInformation = tuple[loc fileLocation, int nrOfLines, int nrOfBlank
  * thirdly count all comment lines (starting with // or between /* and its counterpart 
  * except if these are surrounded by a pair of quotes)
  */
-public set[FileLineInformation] countLinesOfCodePerProject(loc project) {
+public set[FileLineInformation] countLinesOfCodePerMethod(loc project) {
 	M3 model = createM3FromEclipseProject(project); 
     rel[loc,loc] methods =  { <x,y> | <x,y> <- model.declarations, x.scheme=="java+method" || x.scheme=="java+constructor"};                   
-	set[FileLineInformation] flis = {countLinesOfCodePerMethod(l) | <m,l> <- methods};
+	set[FileLineInformation] flis = {countLinesOfCodeOfMethod(l) | <m,l> <- methods};
 	return flis;
 }
 
-public FileLineInformation countLinesOfCodePerMethod(loc method) {
+public FileLineInformation countLinesOfCodeOfMethod(loc method) {
 
 	FileLineInformation fileLineInformation = <method, 0, 0, 0, 0, 0>;	
 	//total number of lines

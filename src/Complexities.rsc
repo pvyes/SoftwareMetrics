@@ -1,14 +1,16 @@
 module Complexities
 
-import IO;
 import Prelude;
 import lang::java::jdt::m3::Core;
 import lang::java::jdt::m3::AST;
 import lang::java::m3::AST;
 import util::Resources;
 
+import lang::java::m3::Core;
+
 alias ComplexityInformation = tuple[loc location,str name ,int complexity];
 
+int i = 0;
 /**
  * param projectlocation
  * return a list of tuples with file location, method name and complexity number.
@@ -20,6 +22,7 @@ public set[ComplexityInformation] calculateComplexities(loc project) {
 	for (loc file <- javafiles) {
 		complexities += calculateMethodComplexity(file);
 	}
+//println("#methods in complexity = <i>");
 	return complexities;
 }
 
@@ -28,8 +31,7 @@ public set[ComplexityInformation] calculateMethodComplexity(loc file) {
 	set[ComplexityInformation] methodComplexities = {};
 	int cCount;
 	str name;
-	loc location;
-int i = 0;	
+	loc location;	
 	
 	visit(ast) {
 		case \method(a,methodName,c,d,impl): {

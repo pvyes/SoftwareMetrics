@@ -19,15 +19,6 @@ public CCRiskEvaluation getCCRiskEvaluation() {
 		<"high", 21,50>,
 		<"very high",51,maxInt>
 	};
-/*
-	//for testing with Jabberpoint use below:
-	return {
-		<"low",0,1>,
-		<"moderate",2,3>,
-		<"high",4,4>,
-		<"very high",5,maxInt>
-	};
-*/
 }
 
 /**
@@ -73,10 +64,10 @@ public LinesOfJavaCodeRanking getLinesOfJavaCodeMethodsRanking() {
  */
  public DuplicationRanking getDuplicationRanking() {
 	return [
-		<"++", 0, 3>,
-		<"+", 3, 5>,
-		<"o", 5, 10>,
-		<"-", 10, 20>,
+		<"++", 0, 2>,
+		<"+", 3, 4>,
+		<"o", 5, 9>,
+		<"-", 10, 19>,
 		<"--", 20, 100>
 	];
 }
