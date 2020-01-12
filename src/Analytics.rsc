@@ -8,9 +8,13 @@ import util::Math;
  
 import Volumes;
 import Complexities;
+import Data;
+import Duplication;
 
-alias CCRiskEvaluation = rel[int min,int max, str risk];
-alias MaxRelativeLOC = rel[str rank, int moderate, int high, int very_high];
+alias UnitSizeEvaluation = rel[str rank, int size];
+alias DuplicationEvaluation = rel[str rank, real rate];
+
+public real REAL_PRECISION = 0.01;
 
 // Methods analyzing the volume (on set[fileLineInformation])
 //	All calculatings are made using the lines of codes
@@ -50,31 +54,21 @@ public set[loc] getMethodsWithMedianVolume(set[FileLineInformation] flis) {
 	return {location | <location,_,_,_,_,linesOfCode> <- flis, linesOfCode == ceil(median) || linesOfCode == floor(median)};
 }
 
+public str rankTotalVolume(int volume) {
+	LinesOfJavaCodeRanking locrs = getLinesOfJavaCodeTotalVolumeRanking();
+	str rating = locrs[4].rank;
+	for (int i <- [4..-1]) {
+		if (volume <= locrs[i].max) { 
+			rating = locrs[i].rank;
+		}
+	}
+	return rating;
+}
 
 /*
 Functions calculating the complexity
 */
 
-public int getMaxInt() {
-	return round(exp(ln(2) * 31)) - 1;
-}
-
-public CCRiskEvaluation getCCRiskEvaluation() {
-	int maxInt = getMaxInt();
-//	return [<0,10,"low">,<11,20,"moderate">,<21,50,"high">,<51,maxInt,"very high">];
-	//for testing with Jabberpoint
-	return {<0,1,"low">,<2,3,"moderate">,<4,4,"high">,<5,maxInt,"very high">};
-}
-
-public MaxRelativeLOC getMaxRelativeLOC() {
-	return [
-		<"++", 25, 0, 0>,
-		<"+", 30, 5, 0>,
-		<"0", 40, 10, 0>,
-		<"-", 50, 15, 5>,
-		<"--", 100, 100, 100>
-	];
-}
 
 /**
  * Returns a set of tuples with the risk-name, the numberOfMethods and the linesOfCode in this risk category. 
@@ -103,22 +97,11 @@ public set[tuple[str,int,int,real]] getPercentageOfLinesOfCodePerRisk (set[Compl
 	CCRiskEvaluation ccre = getCCRiskEvaluation();
 	for (<risk,_,linesOfCode> <- ratings) {
 		real percentage = toReal(linesOfCode) / toReal(totalVolume) * 100.;
+		percentage = round(percentage, REAL_PRECISION);
 		rating = <risk, linesOfCode, totalVolume, percentage>;
 		percentages += rating;
 	}
 	return percentages;	
-}
-
-
-public tuple[str, int, int, int] rateSystemComplexity(set[ComplexityInformation] cis, set[FileLineInformation] flis) {
-	tuple[str rank, int percModerate, int percHigh, int percVeryHigh] rating = <"",0,0,0>;
-	CCRiskEvaluation ccre = getCCRiskEvaluation();
-	for (re <- ccre) {
-		set[ComplexityInformation] cisPerRisk = gatherComplexitiesByRisk(cis, re.risk);
-		tuple[str risk, int nrOfLines] linesOfCis = <re.risk,countLinesOfCis(cisPerRisk, flis)>;
-		println(linesOfCis);
-	}
-	return rating;
 }
 
 /**
@@ -137,24 +120,13 @@ public set[ComplexityInformation] gatherComplexitiesByRisk(set[ComplexityInforma
 public int countLinesOfCis(set[ComplexityInformation] cisPerRisk, set[FileLineInformation] flis) {
 	int count = 0;
 	set[FileLineInformation] tempFlis = flis;
-	println("\n/*****countLinesOfCis (per risk) *******/");
-	for(<_,_,_,locInfo> <- cisPerRisk) {
-		int i = 0;
-		for (fli <- tempFlis) {
-			if (findLocInfoInVolumeInfo(fli.fileLocation, locInfo)) {
-//				println("location = <locInfo>; linesOfCode = <fli.linesOfCode>");
-				count += fli.linesOfCode;
-				tempFlis -= fli;
-			}
-		}
-		println("Total for this <locInfo> = <count>"); 
+	for(<location,_,_> <- cisPerRisk) {
+		count += countLinesOfCodeOfMethod(location).linesOfCode;
 	}
-//	println("Total for this risk = <count>"); 
 	return count;	
 }
 
-public void rateSystem() {
-	map[str,int] percPerRisk = ("low":67,"moderate":20,"high":7,"very high":3);
+public str rateSystemComplexity(map[str, real] percPerRisk) {
 	MaxRelativeLOC mrl = getMaxRelativeLOC();
 	str rating = mrl[4].rank;
 	for (int i <- [4..-1]) {
@@ -162,14 +134,82 @@ public void rateSystem() {
 			rating = mrl[i].rank;
 		}
 	}
-	println(rating);
+	return rating;
 }
 
-public bool findLocInfoInVolumeInfo(loc fileLocation, LocInfo locInfo) {
-	//print("method: <fileLocation.uri> CONTAINS? complexity: <locInfo.locationUri> IS ");
-	if (fileLocation.uri == locInfo.locationUri && fileLocation.offset <= locInfo.offset && fileLocation.length + fileLocation.offset >= locInfo.length + locInfo.offset) {
-	//	println("true");
-		return true;
+//Rating unitsizes
+
+/**
+ * Returns a set of tuples with the rank, the numberOfMethods and the linesOfCode in this rank category. 
+ */
+public set[tuple[str,int,int]] getMethodsPerUnitSizeRank (set[FileLineInformation] flis) {
+	set[tuple[str,int,int]] ratings = {};
+	tuple[str rank, int numberOfMethods, int linesOfCode] rating = <"",0,0>;
+
+	LinesOfJavaCodeRanking locrs = getLinesOfJavaCodeMethodsRanking();
+	for (locr <- locrs) {
+		set[FileLineInformation] flisPerRisk = gatherMethodsByRisk(flis, locr.rank);
+		int numberOfMethods = size(flisPerRisk);
+		int linesOfCode = sum([count | <_,_,_,_,_,count> <- flisPerRisk]);
+		rating = <locr.rank, numberOfMethods, linesOfCode>;
+		ratings += rating;
 	}
-	return false;
+	return ratings;	
+}
+
+/**
+ * gather the FileLineInformation per risk.
+ * return:  a set of FileLineInformations belonging to a same risk level as defined in LinesOfJavaCodeMethodsRanking. 
+ */
+public set[FileLineInformation] gatherMethodsByRisk(set[FileLineInformation] flis, str rank) {
+	LinesOfJavaCodeRanking locrs = getLinesOfJavaCodeMethodsRanking();
+	set[FileLineInformation] flisPerRank = {};
+	for (locr <- locrs, locr.rank == rank) {
+		flisPerRank = {fli | fli <- flis, fli.linesOfCode <= locr.max && fli.linesOfCode >= locr.min};
+	}
+	return flisPerRank;
+}
+
+/**
+ * Returns a set of tuples with the risk-name, the linesOfCode in this risk category, the total volume (LOC) and the percentage relative to the total Volume. 
+ */
+public set[tuple[str,int,int,real]] getPercentageOfLinesOfCodePerRisk (set[FileLineInformation] flis) {
+	set[tuple[str,int,int]] ratings = getMethodsPerUnitSizeRank(flis);
+	set[tuple[str,int,int,real]] percentages = {}; 
+	int totalVolume = getTotalVolume(flis);;
+	for (<risk,_,linesOfCode> <- ratings) {
+		real percentage = toReal(linesOfCode) / toReal(totalVolume) * 100.;
+		percentage = round(percentage, REAL_PRECISION);
+		rating = <risk, linesOfCode, totalVolume, percentage>;
+		percentages += rating;
+	}
+	return percentages;	
+}
+
+public str rateSystemUnitsize(map[str, real] percPerRisk) {
+	MaxRelativeLOC mrl = getMaxRelativeLOC();
+	str rating = mrl[4].rank;
+	for (int i <- [4..-1]) {
+		if (percPerRisk["moderate"] <= mrl[i].moderate && percPerRisk["high"] <= mrl[i].high && percPerRisk["very high"] <= mrl[i].very_high) { 
+			rating = mrl[i].rank;
+		}
+	}
+	return rating;
+}
+
+//Metrics of duplication
+
+public real getDuplicationPercentage(int numberOfDuplications, int totalLinesOfCode) {
+	
+	return duplicationPercentage= toReal(numberOfDuplications)*100/toReal(totalLinesOfCode);
+}
+public str rankDuplication(real duplicationRate) {
+	DuplicationRanking rankings = getDuplicationRanking();
+	str rank = rankings[4].rank;
+	for (int i <- [4..-1]) {
+		if (duplicationRate < rankings[i].max) { 
+			rank = rankings[i].rank;
+		}
+	}
+	return rank;
 }
