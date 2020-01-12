@@ -9,20 +9,12 @@ import util::Math;
 import Volumes;
 import Complexities;
 import Data;
+import Duplication;
 
 alias UnitSizeEvaluation = rel[str rank, int size];
 alias DuplicationEvaluation = rel[str rank, real rate];
 
-data UnitSizeRating = Simple()
-          | MoreComplex()
-          | Complex()
-          | Untestable();
-
-data DuplicationRating = VeryLow()
-          | Low()
-          | Moderate()
-          | High()
-          | VeryHigh();
+public real REAL_PRECISION = 0.01;
 
 // Methods analyzing the volume (on set[fileLineInformation])
 //	All calculatings are made using the lines of codes
@@ -105,7 +97,7 @@ public set[tuple[str,int,int,real]] getPercentageOfLinesOfCodePerRisk (set[Compl
 	CCRiskEvaluation ccre = getCCRiskEvaluation();
 	for (<risk,_,linesOfCode> <- ratings) {
 		real percentage = toReal(linesOfCode) / toReal(totalVolume) * 100.;
-		percentage = round(percentage, 0.01);
+		percentage = round(percentage, REAL_PRECISION);
 		rating = <risk, linesOfCode, totalVolume, percentage>;
 		percentages += rating;
 	}
@@ -129,7 +121,7 @@ public int countLinesOfCis(set[ComplexityInformation] cisPerRisk, set[FileLineIn
 	int count = 0;
 	set[FileLineInformation] tempFlis = flis;
 	for(<location,_,_> <- cisPerRisk) {
-		count += countLinesOfCodePerMethod(location).linesOfCode;
+		count += countLinesOfCodeOfMethod(location).linesOfCode;
 	}
 	return count;	
 }
@@ -187,7 +179,7 @@ public set[tuple[str,int,int,real]] getPercentageOfLinesOfCodePerRisk (set[FileL
 	int totalVolume = getTotalVolume(flis);;
 	for (<risk,_,linesOfCode> <- ratings) {
 		real percentage = toReal(linesOfCode) / toReal(totalVolume) * 100.;
-		percentage = round(percentage, 0.01);
+		percentage = round(percentage, REAL_PRECISION);
 		rating = <risk, linesOfCode, totalVolume, percentage>;
 		percentages += rating;
 	}
@@ -207,15 +199,15 @@ public str rateSystemUnitsize(map[str, real] percPerRisk) {
 
 //Metrics of duplication
 
-public int getDuplicationPercentage(int numberOfDuplications, int totalLinesOfCode) {
-	return duplicationPercentage= percent((toReal(CODE_BLOCK_SIZE) * toReal(numberOfDuplications)),totalLinesOfCode);
+public real getDuplicationPercentage(int numberOfDuplications, int totalLinesOfCode) {
+	
+	return duplicationPercentage= toReal(numberOfDuplications)*100/toReal(totalLinesOfCode);
 }
-
-public str rankDuplication(int duplicationRate) {
+public str rankDuplication(real duplicationRate) {
 	DuplicationRanking rankings = getDuplicationRanking();
 	str rank = rankings[4].rank;
 	for (int i <- [4..-1]) {
-		if (duplicationRate <= rankings[i].max) { 
+		if (duplicationRate < rankings[i].max) { 
 			rank = rankings[i].rank;
 		}
 	}

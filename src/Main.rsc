@@ -16,14 +16,14 @@ public void main() {
 	loc PROJECT = |project://smallsql|;
 	println("Building model and calculating analytics... Please be patient.\n");
 
-	set[FileLineInformation] flis = countLinesOfCodePerProject(PROJECT);
+	set[FileLineInformation] flis = countLinesOfCodePerMethod(PROJECT);
 	set[ComplexityInformation] cis = calculateComplexities(PROJECT);
-
+	
 	printGeneralInformation(PROJECT);
 	printVolumeAnalytics(PROJECT, flis);
 	printComplexityInformation(PROJECT, flis, cis);
 	printUnitSizeInformation(PROJECT, flis);
-//	printDuplicationInformation(PROJECT, flis);
+	printDuplicationInformation(PROJECT, flis, getTotalVolume(flis));
 
 	printVolumeDetails(flis);
 	printComplexityDetails(cis);
@@ -57,15 +57,15 @@ public void	printVolumeAnalytics(loc project, set[FileLineInformation] flis) {
 	println();
 	int siz = getHighestVolumeFile(flis);
 	int nrOfMethods = size(getMethodsWithHighestVolume(flis));
-	println("Highest Volume method for <project> = <siz> (<nrOfMethods> methods(s))");
+	println("Highest Volume method for <project> = <siz> (<nrOfMethods> method(s))");
 	siz = getLowestVolumeFile(flis);
 	nrOfMethods = size(getMethodsWithLowestVolume(flis));
-	println("Lowest Volume method for <project> = <siz> (<nrOfMethods> methods(s))");
+	println("Lowest Volume method for <project> = <siz> (<nrOfMethods> method(s))");
 	print("Average Volume for <project> = ");
 	println(toInt(getAverageVolumeFile(flis)));
 	real med = getMedianVolumeFile(flis);
 	nrOfMethods = size(getMethodsWithMedianVolume(flis));
-	println("Median Volume method for <project> = <med> (<nrOfMethods> methods(s))");
+	println("Median Volume method for <project> = <med> (<nrOfMethods> method(s))");
 }
 
 public void	printComplexityInformation(loc project, set[FileLineInformation] flis, set[ComplexityInformation] cis) {	
@@ -103,19 +103,20 @@ public void	printUnitSizeInformation(loc project, set[FileLineInformation] flis)
 	println("System global unit size ranking = <systemRating>");
 }
 
-public void	printDuplicationInformation(loc project, set[FileLineInformation] flis) {
+public void	printDuplicationInformation(loc project, set[FileLineInformation] flis, int volume) {
 	println();
 	println("Evaluating duplications");
 	println("***************************************\n");
 	
-	set[loc] methodLocations = {methodLocation | <methodLocation,_,_,_,_,_> <- flis};	
-	DuplicationInformaton dupInfo = getCodeDuplicationInformation(toList(methodLocations));
-	int duplicationRate = getDuplicationPercentage(dupInfo.numberOfDuplications, dupInfo.totalLinesOfCode);	 
+	set[loc] methodLocations = {methodLocation | <methodLocation,_,_,_,_,_> <- flis};
+	
+	int numberOfDuplications = getCodeDuplicationInformation(toList(methodLocations));
+	real duplicationRate = getDuplicationPercentage(numberOfDuplications, volume);
 
-	println("Absolute numbers: <dupInfo>");
-	println("Duplication percentage: <duplicationRate>");
-	println();
-	println("Rank for duplications in percentages: <rankDuplication(duplicationRate)>");
+	println("Evaluation duplications\n");
+	println("Number of duplicated lines of code: <numberOfDuplications>");
+	println("Duplication percentage: <precision(duplicationRate, 3)>");
+	println("Duplication Rank: <rankDuplication(duplicationRate)>");
 }
 
 public void	printVolumeDetails(set[FileLineInformation]flis) {
