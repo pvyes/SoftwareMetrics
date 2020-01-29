@@ -13,7 +13,6 @@ import Analytics;
 import Duplication;
 
 public void main() {
-	loc PROJECT = |project://smallsql|;
 	println("Building model and calculating analytics... Please be patient.\n");
 
 	set[FileLineInformation] flis = countLinesOfCodePerMethod(PROJECT);
