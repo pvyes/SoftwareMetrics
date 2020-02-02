@@ -20,6 +20,12 @@ public set[FileLineInformation] countLinesOfCodePerMethod(loc project) {
 	return flis;
 }
 
+public set[FileLineInformation] countLinesOfCodePerMethod(M3 model) { 
+    rel[loc,loc] methods =  { <x,y> | <x,y> <- model.declarations, x.scheme=="java+method" || x.scheme=="java+constructor"};                   
+	set[FileLineInformation] flis = {countLinesOfCodeOfMethod(l) | <m,l> <- methods};
+	return flis;
+}
+
 public FileLineInformation countLinesOfCodeOfMethod(loc method) {
 
 	FileLineInformation fileLineInformation = <method, 0, 0, 0, 0, 0>;	

@@ -11,13 +11,22 @@ import Complexities;
 import Volumes;
 import Analytics;
 import Duplication;
+import Visualization;
 
 public void main() {
+	loc PROJECT = |project://Jabberpoint2|;
 	println("Building model and calculating analytics... Please be patient.\n");
-
-	set[FileLineInformation] flis = countLinesOfCodePerMethod(PROJECT);
+	
+	M3 model = createM3FromEclipseProject(PROJECT); 
+	set[FileLineInformation] flis = countLinesOfCodePerMethod(model);
 	set[ComplexityInformation] cis = calculateComplexities(PROJECT);
 	
+	initializeVisualization(model);
+//	showClassesInGrid();	
+	showBasicClassGraph();
+//	showClassDetails(|java+class:///MenuController|);	
+	
+/*	
 	printGeneralInformation(PROJECT);
 	printVolumeAnalytics(PROJECT, flis);
 	printComplexityInformation(PROJECT, flis, cis);
@@ -26,7 +35,7 @@ public void main() {
 
 	printVolumeDetails(flis);
 	printComplexityDetails(cis);
-}
+*/}
 
 public void	printGeneralInformation(loc project) {
 	Resource projectResource = getProject(project);

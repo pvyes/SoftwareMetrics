@@ -1,5 +1,5 @@
-module Figures
-
+module FiguresTest
+import IO;
 import analysis::graphs::Graph;
 import Relation;
 import vis::Figure;
@@ -20,6 +20,8 @@ public Figure showGraph(Graph[str] g) {
    edges = [ edge(a, b, toArrow(ellipse(size(5))))
            | <a, b> <- g
            ];
+   println(nodes);
+   println(edges);
    return graph(nodes, edges, hint("layered"), gap(50));
 }
   
