@@ -18,9 +18,8 @@ alias FieldInfo = tuple[loc,str,str,set[Modifier]];
 
 /* Returns a relation of locations and Figures presenting basic information of java fields
 */
-public FieldNodes makeFieldNodes(M3 model/*, loc classDefinition*/) {
-	classDefinition = |java+class:///SlideViewerComponent|;
-	rel[loc definition, str name, str returntype, set[Modifier] modifiers] fields = getFieldsOfClass(model, classDefinition);
+public FieldNodes makeFieldNodes(M3 model, loc classDefinition) {
+	rel[loc definition, str name, str attrType, set[Modifier] modifiers] fields = getFieldsOfClass(model, classDefinition);
 	FieldNodes fieldNodes = [<f.definition, makeFieldBox(model,f)> | f <- fields];
 	Figure fieldsBox = makeFieldsBox(fieldNodes);
 	return fieldNodes;
@@ -28,16 +27,16 @@ public FieldNodes makeFieldNodes(M3 model/*, loc classDefinition*/) {
 
 public Figure makeFieldsBox(FieldNodes fieldNodes) {
 	list[Figures] fieldBoxes = [[b] | <_,b> <- fieldNodes];	
-	Figure fieldsBox = grid(fieldBoxes);
+	Figure fieldsBox = box(grid(fieldBoxes));
 	return fieldsBox;
 }
 
 
 /* Returns a Figure presenting basic class/interface information */
-public Figure makeFieldBox(M3 model,  tuple[loc definition, str name, str returntype, set[Modifier] modifiers] field) {
+public Figure makeFieldBox(M3 model,  tuple[loc definition, str name, str attrType, set[Modifier] modifiers] field) {
 	Figure fieldNode;
 	//name of field
-	str textstr = "<field.name>: <field.returntype>";
+	str textstr = "<field.name>: <field.attrType>";
 	//get modifiers
 	set[Modifier] modifiers = field.modifiers;
 	bool font_italic = false;
@@ -64,9 +63,10 @@ public Figure makeFieldBox(M3 model,  tuple[loc definition, str name, str return
 			halign(0.05)),  
 		id(field.definition.uri), 
 		grow(1.2),
-		fillColor(bg_color)
+		fillColor(bg_color),
+		lineColor(bg_color)
 	);
-	println(fieldBox);
+//	println(fieldBox);
 	return fieldBox;
 }
 
@@ -125,19 +125,19 @@ public str getFieldName(M3 model, loc definition) {
 }
 
 /* returns a relation of all the fields.
- 	<loc definition, str name, str returntype, set[Modifier] modifiers >
+ 	<loc definition, str name, str attrType, set[Modifier] modifiers >
  */
-public rel[loc definition, str name, str returntype, set[Modifier] modifiers] getFieldsOfClasses(model) {
+public rel[loc definition, str name, str attrType, set[Modifier] modifiers] getFieldsOfClasses(model) {
 	rel[loc definition, Modifier modifier] modifiers = getFieldsModifiers(model);
 	rel[loc,str,str,set[Modifier]] fieldinfos = {<x, getFieldName(model , x), getTypeToString(y), getModifiers(modifiers, x)> | <x,y> <- model.types, x.scheme == "java+field"};
 	return fieldinfos;
 }
 
 /* returns a relation of particular fields of a given class.
- 	<loc definition, str name, str returntype, set[Modifier] modifiers >
+ 	<loc definition, str name, str attrType, set[Modifier] modifiers >
  */
-public rel[loc definition, str name, str returntype, set[Modifier] modifiers] getFieldsOfClass(M3 model, loc definition) {
-	rel[loc definition,str name,str returntype,set[Modifier] modifiers] fields = getFieldsOfClasses(model);
+public rel[loc definition, str name, str attrType, set[Modifier] modifiers] getFieldsOfClass(M3 model, loc definition) {
+	rel[loc definition,str name,str attrType,set[Modifier] modifiers] fields = getFieldsOfClasses(model);
 	set[loc] fieldsOfClass = {y | <x,y> <- getFieldContainment(model,definition)};
 	return {f | f <- fields, f.definition in fieldsOfClass};
 }
@@ -188,14 +188,11 @@ public str getTypeToString(TypeSymbol t) {
 /* Returns a nested TypeSymbol, e.g. for arrays */
 public TypeSymbol getNestedTypeSymbol(TypeSymbol t) {
 	switch (t) {
-		case \class(loc decl, list[TypeSymbol] typeParameters): {
-			return t; 
-		}
 		case \array(TypeSymbol component, int dimension): {
 			return getNestedTypeSymbol(component);
 		}
 		default: {
-			return \unresolved(); 
+			return t; 
 		}
 	}
 }

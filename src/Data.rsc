@@ -3,6 +3,7 @@ module Data
 import util::Math;
 
 alias CCRiskEvaluation = rel[str risk, int min,int max];
+alias ComplexityRating = lrel[str risk, int min,int max];
 alias MaxRelativeLOC = lrel[str rank, int moderate, int high, int very_high];
 alias LinesOfJavaCodeRanking = lrel[str rank, int min, int max];
 alias DuplicationRanking = lrel[str rank, int min, int max];
@@ -21,6 +22,20 @@ public CCRiskEvaluation getCCRiskEvaluation() {
 	};
 }
 
+public ComplexityRating getComplexityRanking() {
+	return [
+		<"low", 0, 2>,
+		<"moderate", 3, 5>,
+		<"high", 6, 8>,
+		<"very high", 9, maxInt>
+	];
+/*	return [
+		<"low", 0, 10>,
+		<"moderate", 11, 20>,
+		<"high", 21, 50>,
+		<"very high", 51, maxInt>
+	];
+*/}
 /**
  * Returns a listrelation of type MaxRelativeLoc to measure the percentage of lines of code of a specific cc risk, containing rank, min complexity, max complexity and risk.
  */
@@ -52,10 +67,10 @@ public LinesOfJavaCodeRanking getLinesOfJavaCodeTotalVolumeRanking() {
  */
 public LinesOfJavaCodeRanking getLinesOfJavaCodeMethodsRanking() {
 	return [
-		<"low", 0, 6>,
-		<"moderate", 7, 8>,
-		<"high", 9, 14>,
-		<"very high", 15, maxInt>
+		<"low", 0, 30>,
+		<"moderate", 31, 44>,
+		<"high", 45, 74>,
+		<"very high", 75, maxInt>
 	];
 }
 

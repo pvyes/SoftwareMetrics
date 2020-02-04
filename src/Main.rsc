@@ -21,10 +21,11 @@ public void main() {
 	set[FileLineInformation] flis = countLinesOfCodePerMethod(model);
 	set[ComplexityInformation] cis = calculateComplexities(PROJECT);
 	
-	initializeVisualization(model);
+	initializeVisualization(model, PROJECT);
 //	showClassesInGrid();	
-	showBasicClassGraph();
-//	showClassDetails(|java+class:///MenuController|);	
+//	showBasicClassGraph();
+//	showClassDetails(|java+class:///MenuController|);
+	showMetrics();	
 	
 /*	
 	printGeneralInformation(PROJECT);
