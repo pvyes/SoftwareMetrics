@@ -23,19 +23,14 @@ public CCRiskEvaluation getCCRiskEvaluation() {
 }
 
 public ComplexityRating getComplexityRanking() {
-	return [
-		<"low", 0, 2>,
-		<"moderate", 3, 5>,
-		<"high", 6, 8>,
-		<"very high", 9, maxInt>
-	];
-/*	return [
+return [
 		<"low", 0, 10>,
 		<"moderate", 11, 20>,
 		<"high", 21, 50>,
 		<"very high", 51, maxInt>
 	];
-*/}
+}
+
 /**
  * Returns a listrelation of type MaxRelativeLoc to measure the percentage of lines of code of a specific cc risk, containing rank, min complexity, max complexity and risk.
  */

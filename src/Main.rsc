@@ -14,7 +14,7 @@ import Duplication;
 import Visualization;
 
 public void main() {
-	loc PROJECT = |project://Jabberpoint2|;
+	loc PROJECT = |project://Jabberpoint|;
 	println("Building model and calculating analytics... Please be patient.\n");
 	
 	M3 model = createM3FromEclipseProject(PROJECT); 
@@ -22,12 +22,6 @@ public void main() {
 	set[ComplexityInformation] cis = calculateComplexities(PROJECT);
 	
 	initializeVisualization(model, PROJECT);
-//	showClassesInGrid();	
-//	showBasicClassGraph();
-//	showClassDetails(|java+class:///MenuController|);
-	showMetrics();	
-	
-/*	
 	printGeneralInformation(PROJECT);
 	printVolumeAnalytics(PROJECT, flis);
 	printComplexityInformation(PROJECT, flis, cis);
@@ -36,7 +30,7 @@ public void main() {
 
 	printVolumeDetails(flis);
 	printComplexityDetails(cis);
-*/}
+}
 
 public void	printGeneralInformation(loc project) {
 	Resource projectResource = getProject(project);

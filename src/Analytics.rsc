@@ -150,7 +150,9 @@ public set[tuple[str,int,int]] getMethodsPerUnitSizeRank (set[FileLineInformatio
 	for (locr <- locrs) {
 		set[FileLineInformation] flisPerRisk = gatherMethodsByRisk(flis, locr.rank);
 		int numberOfMethods = size(flisPerRisk);
-		int linesOfCode = sum([count | <_,_,_,_,_,count> <- flisPerRisk]);
+		list[int] linesOfCodeList = [count | <_,_,_,_,_,count> <- flisPerRisk];
+		int linesOfCode = 0;
+		if (size(linesOfCodeList) > 0) linesOfCode = sum(linesOfCodeList);
 		rating = <locr.rank, numberOfMethods, linesOfCode>;
 		ratings += rating;
 	}

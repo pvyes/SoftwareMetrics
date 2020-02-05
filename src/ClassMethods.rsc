@@ -148,8 +148,10 @@ public Parameters getMethodParameters(M3 model, set[loc] paramDefinitions) {
 public tuple[loc definition, str name, str methodType] getParameter(M3 model, loc paramDefinition) {
 	set[str] name =  {name | <name,def> <- getParameters(model), def == paramDefinition};
 	set[str] ptype = {getTypeToString(y) | <x,y> <- model.types, x.scheme == "java+parameter", x == paramDefinition};
+	if (size(name) == 0 && size(ptype) == 0) return <paramDefinition, "", "">;
+	if (size(name) == 0) return <paramDefinition, "", getOneFrom(ptype)>;
+	if (size(ptype) == 0) return <paramDefinition, getOneFrom(name), "">;
 	return <paramDefinition, getOneFrom(name), getOneFrom(ptype)>;
-
 }
 
 
@@ -177,16 +179,11 @@ public rel[loc definition, loc location] getParameterDeclarations(M3 model/*, lo
  	<loc definition, str name, str returntype, set[Modifier] modifiers >
  */
 public MethodInfos getMethodsOfClass(M3 model, loc classDefinition) {
-
-//println(getMethodContainment(model, classDefinition));
 	MethodInfos methodInfos = {};
 	for (<_,methodDefinition> <- getMethodContainment(model, classDefinition)) {
-//	println(methodDefinition);
 		set[loc parameter] params = {y | <_,y> <- getParameterContainment(model, methodDefinition)};
 		methodInfos += getMethod(model, methodDefinition, params);
-//		set[loc] methodsOfClass = {x | <x,y> <- getMethodDeclarations(model,methodDefinition)};
 	}
-//	return {f | f <- methods, f.definition in methodsOfClass};
 	return methodInfos;
 }
 
@@ -241,7 +238,8 @@ public str getTypeToString(TypeSymbol t) {
 		}		
 		case \array(TypeSymbol component, int dimension): {
 			TypeSymbol ts = getNestedTypeSymbol(component);
-			return "<ts.decl.file>[]";
+			return "<ts>[]";
+//			return "<ts.decl.file>[]";
 		}
 		default: {
 			return "<t>"; 
